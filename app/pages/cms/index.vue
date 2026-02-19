@@ -38,7 +38,7 @@
       </div>
     </q-form>
 
-    <q-dialog v-model="dialog.show" :persistent="dialog.persistent">
+    <q-dialog v-model="dialog.show" :persistent="dialog.persistent" transition-show="fade" transition-hide="fade" backdrop-filter="blur(3px)" maximized full-height>
       <q-card style="min-width: 600px; max-width: 90vw;">
         <q-toolbar class="bg-primary text-white">
           <q-toolbar-title>{{ dialog.title }}</q-toolbar-title>
@@ -110,7 +110,20 @@ const init = async () => {
     ...Meta.model,
   })
 
+  await getSheet()
   await getData(1)
+}
+
+const getSheet = async () => {
+  loading.value = true
+  try {
+    const res: any = await $api.get('sheet?id=1UvYE60J1sxF0vYcF9SrztW7-Os_-uS3-_KC2U5MJ_-w')
+    loading.value = false
+    console.log(res)    
+  } catch (e) {
+    loading.value = false
+    console.error(e)
+  }
 }
 
 const getData = async (id: string | number) => {

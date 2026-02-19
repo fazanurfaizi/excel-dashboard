@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',
+  compatibilityDate: '2025-01-30',
   devtools: { enabled: true },
   modules: ['nuxt-quasar-ui', '@vueuse/nuxt', '@pinia/nuxt', 'nuxt-auth-utils'],
   quasar: {
@@ -26,5 +26,14 @@ export default defineNuxtConfig({
       }
     }
   },
-  ssr: true, 
+  ssr: true,
+  nitro: {
+    compatibilityDate: '2025-01-30',
+    experimental: {
+      tasks: true
+    }
+  },
+  runtimeConfig: {
+    spreadsheetId: ''
+  }
 })
