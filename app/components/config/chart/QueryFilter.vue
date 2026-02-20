@@ -23,7 +23,7 @@
               <q-btn flat dense color="negative" icon="delete" size="sm" @click="removeFilter(i)" />
             </div>
           </td>
-          <markup-table-td-input :i="i" v-model="v.name" type="select" :options="effectiveColumns" option-label="name" option-value="name" @update:model-value="resetRow(v)" />
+          <markup-table-td-input :i="i" v-model="v.name" type="select" :options="effectiveColumns" :option-label="(val: any) => val.name" option-value="name" @update:model-value="resetRow(v)" />
           <markup-table-td-input :i="i" v-model="v.operator" type="select" :options="getOperatorOptions(v.name)" />
           <markup-table-td-input v-if="v.operator === 'order'" :i="i" v-model="v.value" type="select" :options="['ASC', 'DESC']" />
           <markup-table-td-input v-else :i="i" v-model="v.value" :type="getValueInputType(v.name)" />

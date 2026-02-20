@@ -144,8 +144,8 @@
               </q-tab-panel>
 
               <q-tab-panel name="chart" v-if="!isTable">                
-                <config-widget-combine-chart 
-                  v-if="isCombine" 
+                <config-widget-basic-chart 
+                  v-if="isBasic" 
                   v-model="dataModel.config.chart" 
                   :columns="dataModel.config.columns" 
                 />
@@ -202,7 +202,7 @@ if (!dataModel.value.config.columns) dataModel.value.config.columns = []
 
 
 const widgetTypeOptions = [
-  { label: 'Combine Chart (Bar/Line/Area)', value: 'combine_chart' },
+  { label: 'Basic Chart (Bar/Line/Area)', value: 'basic_chart' },
   { label: 'Donut Chart', value: 'donut_chart' },
   { label: 'Waterfall Chart', value: 'waterfall_chart' },
   { label: 'Sparkline', value: 'sparkline_chart' },
@@ -210,7 +210,7 @@ const widgetTypeOptions = [
 ]
 
 const isTable = computed(() => dataModel.value.type === 'inventory' || dataModel.value.type === 'table')
-const isCombine = computed(() => ['combine_chart', 'bar_chart', 'area_chart'].includes(dataModel.value.type))
+const isBasic = computed(() => ['basic_chart', 'bar_chart', 'area_chart'].includes(dataModel.value.type))
 const isWaterfall = computed(() => dataModel.value.type === 'waterfall_chart')
 const isDonut = computed(() => dataModel.value.type === 'donut_chart')
 const isSparkline = computed(() => dataModel.value.type === 'sparkline_chart')
@@ -313,7 +313,7 @@ const addSeries = () => {
   dataModel.value.config.chart.series.push({
     field: null,
     axis: 'y',
-    type: isCombine.value ? 'column' : 'auto',
+    type: isBasic.value ? 'column' : 'auto',
     mode: 'lines'
   })
 }
@@ -322,7 +322,7 @@ const delSeries = (i: number) => dataModel.value.config.chart.series.splice(i, 1
 
 const submit = () => {
   if (isDonut.value) dataModel.value.config.chart.type = 'pie'
-  else if (isCombine.value) dataModel.value.config.chart.type = 'column'
+  else if (isBasic.value) dataModel.value.config.chart.type = 'column'
 
   emit('update:modelValue', dataModel.value)
   emit('submit', dataModel.value)

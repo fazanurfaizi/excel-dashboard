@@ -103,11 +103,11 @@
                     <thead class="bg-grey-1">
                       <tr>
                         <th style="width: 50px">Action</th>
-                        <MarkupTableThInput>Field ID</MarkupTableThInput>
-                        <MarkupTableThInput>Label</MarkupTableThInput>
-                        <MarkupTableThInput>Format</MarkupTableThInput>
-                        <MarkupTableThInput>Precision</MarkupTableThInput>
-                        <MarkupTableThInput>Aggregation</MarkupTableThInput>
+                        <markup-table-th-input>Field ID</markup-table-th-input>
+                        <markup-table-th-input>Label</markup-table-th-input>
+                        <markup-table-th-input>Format</markup-table-th-input>
+                        <markup-table-th-input>Precision</markup-table-th-input>
+                        <markup-table-th-input>Aggregation</markup-table-th-input>
                       </tr>
                     </thead>
                     <tbody>
@@ -116,11 +116,11 @@
                           <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delColumn(i)" />
                         </td>
                         <td class="bg-grey-1 text-grey-7">{{ v.name }}</td>
-                        <MarkupTableTdInput :i="i" v-model="v.label" />
-                        <MarkupTableTdInput :i="i" v-model="v.format" type="select" :options="optFormat" />
-                        <MarkupTableTdInput v-if="v.format === 'number'" :i="i" v-model="v.precision" type="number" :precision="0" />
+                        <markup-table-td-input :i="i" v-model="v.label" />
+                        <markup-table-td-input :i="i" v-model="v.format" type="select" :options="optFormat" />
+                        <markup-table-td-input v-if="v.format === 'number'" :i="i" v-model="v.precision" type="number" :precision="0" />
                         <td v-else class="bg-grey-2"></td>
-                        <MarkupTableTdInput v-if="v.format" :i="i" v-model="v.aggregation" type="select" :options="optAggregation[v.format]" />
+                        <markup-table-td-input v-if="v.format" :i="i" v-model="v.aggregation" type="select" :options="optAggregation[v.format]" />
                         <td v-else class="bg-grey-2"></td>
                       </tr>
                     </tbody>
@@ -166,7 +166,7 @@
                   </div>
                 </div>
                 <q-separator class="q-my-md" />
-                <ConfigChartQueryFilter 
+                <config-chart-query-filter 
                   v-model="dataModel.config.query.filters" 
                   :columns="rawData.cols" 
                 />
@@ -218,14 +218,14 @@
                     <thead class="bg-grey-1">
                       <tr>
                         <th style="width: 50px"></th>
-                        <MarkupTableThInput>Field (Y-Axis)</MarkupTableThInput>
-                        <template v-if="isCombine">
-                          <MarkupTableThInput>Axis</MarkupTableThInput>
-                          <MarkupTableThInput>Type</MarkupTableThInput>
-                          <MarkupTableThInput>Mode</MarkupTableThInput>
+                        <markup-table-th-input>Field (Y-Axis)</markup-table-th-input>
+                        <template v-if="isBasic">
+                          <markup-table-th-input>Axis</markup-table-th-input>
+                          <markup-table-th-input>Type</markup-table-th-input>
+                          <markup-table-th-input>Mode</markup-table-th-input>
                         </template>
                          <template v-if="isWaterfall">
-                          <MarkupTableThInput>Type (Relative/Total)</MarkupTableThInput>
+                          <markup-table-th-input>Type (Relative/Total)</markup-table-th-input>
                         </template>
                       </tr>
                     </thead>
@@ -235,22 +235,22 @@
                           <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delSeries(i)" />
                         </td>
                         
-                        <MarkupTableTdInput 
+                        <markup-table-td-input 
                           :i="i" v-model="v.field" type="select" 
                           :options="dataModel.config.columns" 
                           :optionLabel="(col: any) => col.label || col.name" 
                           option-value="name" 
                         />
 
-                        <template v-if="isCombine">
-                          <MarkupTableTdInput :i="i" v-model="v.axis" type="select" :options="['y', 'y2']" />
-                          <MarkupTableTdInput :i="i" v-model="v.type" type="select" :options="['column', 'line', 'area', 'scatter']" />
-                          <MarkupTableTdInput v-if="v.type !== 'column'" :i="i" v-model="v.mode" type="select" :options="['lines', 'lines+markers', 'markers']" />
+                        <template v-if="isBasic">
+                          <markup-table-td-input :i="i" v-model="v.axis" type="select" :options="['y', 'y2']" />
+                          <markup-table-td-input :i="i" v-model="v.type" type="select" :options="['column', 'line', 'area', 'scatter']" />
+                          <markup-table-td-input v-if="v.type !== 'column'" :i="i" v-model="v.mode" type="select" :options="['lines', 'lines+markers', 'markers']" />
                           <td v-else class="bg-grey-2" />
                         </template>
 
                         <template v-if="isWaterfall">
-                           <MarkupTableTdInput :i="i" v-model="v.mode" type="select" :options="['relative', 'total']" />
+                           <markup-table-td-input :i="i" v-model="v.mode" type="select" :options="['relative', 'total']" />
                         </template>
                       </tr>
                     </tbody>
@@ -259,14 +259,12 @@
               </q-tab-panel>
 
               <q-tab-panel name="style" v-if="!isTable">
-                 <ConfigChartChartStyle v-model="dataModel.config.chartStyles" />
+                <config-chart-chart-style v-model="dataModel.config.chartStyles" />
               </q-tab-panel>
-
             </q-tab-panels>
           </q-card>
         </div>
       </div>
-
     </q-form>
   </q-card>
 </template>
@@ -287,18 +285,15 @@ const $api = useApi()
 const tab = ref('columns')
 const loadingSchema = ref(false)
 
-// Initialize model with defaults if missing
 const dataModel = ref<WidgetData>(JSON.parse(JSON.stringify(props.modelValue)))
 
-// Ensure nested config objects exist
 if (!dataModel.value.config) dataModel.value.config = { query: { filters: [] }, columns: [], chart: { series: [] } } as any
 if (!dataModel.value.config.query) dataModel.value.config.query = { limit: 0, order: '', filters: [] }
 if (!dataModel.value.config.chart) dataModel.value.config.chart = { type: 'column', series: [], x: null, legend: null }
 if (!dataModel.value.config.chart.series) dataModel.value.config.chart.series = []
 
-// Helper for Widget Types
 const widgetTypeOptions = [
-  { label: 'Combine Chart (Bar/Line/Area)', value: 'combine_chart' },
+  { label: 'Basic Chart (Bar/Line/Area)', value: 'basic_chart' },
   { label: 'Donut Chart', value: 'donut_chart' },
   { label: 'Waterfall Chart', value: 'waterfall_chart' },
   { label: 'Sparkline', value: 'sparkline_chart' },
@@ -306,15 +301,13 @@ const widgetTypeOptions = [
 ]
 
 const isTable = computed(() => dataModel.value.type === 'inventory' || dataModel.value.type === 'table')
-const isCombine = computed(() => ['combine_chart', 'bar_chart', 'area_chart'].includes(dataModel.value.type))
+const isBasic = computed(() => ['basic_chart', 'bar_chart', 'area_chart'].includes(dataModel.value.type))
 const isWaterfall = computed(() => dataModel.value.type === 'waterfall_chart')
 const isDonut = computed(() => dataModel.value.type === 'donut_chart')
 const isSparkline = computed(() => dataModel.value.type === 'sparkline_chart')
 
-// Raw Data for Preview
 const rawData = ref<{ cols: any[], rows: any[] }>({ cols: [], rows: [] })
 
-// Options for Columns
 const optFormat = ['text', 'number', 'date', 'datetime']
 const optAggregation: Record<string, string[]> = {
   number: ['', 'sum', 'avg', 'min', 'max', 'count'],
@@ -323,18 +316,13 @@ const optAggregation: Record<string, string[]> = {
   text: ['', 'count']
 }
 
-// Fetch Columns from Sheet API
 const fetchColumns = async () => {
   const { spreadsheetId, sheetName } = dataModel.value.config
   if (!spreadsheetId) return
 
   loadingSchema.value = true
   try {
-    // Call server/api/sheet.ts
     const res: any = await $api.get('/api/sheet')
-    // const res: any = await $api.get('/api/sheet', { 
-    //   params: { id: spreadsheetId, sheet: sheetName, limit: 5 } 
-    // })
     
     const data = res.data || res
     if (Array.isArray(data) && data.length > 0) {
@@ -353,17 +341,15 @@ const fetchColumns = async () => {
   }
 }
 
-// Format Detection Helper
 const detectFormat = (val: any) => {
   if (!isNaN(Number(val))) return 'number'
   if (typeof val === 'string' && !isNaN(Date.parse(val))) return 'date'
   return 'text'
 }
 
-// Column Management
 const addColumn = (col: any) => {
   dataModel.value.config.columns.push({
-    id: col.name, // Sheet columns often use header as ID
+    id: col.name,
     name: col.name,
     label: col.name,
     format: col.format,
@@ -374,22 +360,19 @@ const addColumn = (col: any) => {
 }
 const delColumn = (i: number) => dataModel.value.config.columns.splice(i, 1)
 
-// Series Management
 const addSeries = () => {
   dataModel.value.config.chart.series.push({
     field: null,
     axis: 'y',
-    type: isCombine.value ? 'column' : 'auto',
+    type: isBasic.value ? 'column' : 'auto',
     mode: 'lines'
   })
 }
 const delSeries = (i: number) => dataModel.value.config.chart.series.splice(i, 1)
 
-// Submit
 const submit = () => {
-  // Map specific chart types to Plotly types if needed
   if (isDonut.value) dataModel.value.config.chart.type = 'pie'
-  else if (isCombine.value) dataModel.value.config.chart.type = 'column' // Default, overrides per series
+  else if (isBasic.value) dataModel.value.config.chart.type = 'column'
   
   emit('update:modelValue', dataModel.value)
   emit('submit', dataModel.value)

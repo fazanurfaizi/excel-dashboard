@@ -1,7 +1,7 @@
 <template>
   <div class="col-12 q-pt-sm">
     <div class="text-subtitle2 text-grey-8 q-mb-sm">Chart Configuration</div>
-    <div class="row">
+    <div class="row q-mb-sm">
       <div class="col-12">
         <q-select v-model="model.options.barMode" label="Bar Mode" :options="['group', 'stack', 'overlay', 'relative']" dense outlined bg-color="white" />
       </div>

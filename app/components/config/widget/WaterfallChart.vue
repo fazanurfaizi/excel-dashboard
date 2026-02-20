@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { COLORS } from '~/utils/constants';
 import type { WidgetData } from '~~/types/dashboard';
 
 const props = defineProps<{
@@ -132,9 +133,9 @@ const measureColumn = computed({
 
 const colors = computed({
   get: () => ({
-    increasing: chartConfig.value.options?.config?.increasingColor || '#2E7D32',
-    decreasing: chartConfig.value.options?.config?.decreasingColor || '#D32F2F',
-    total: chartConfig.value.options?.config?.totalColor || '#1976D2'
+    increasing: chartConfig.value.options?.config?.increasingColor || COLORS.GREEN,
+    decreasing: chartConfig.value.options?.config?.decreasingColor || COLORS.RED,
+    total: chartConfig.value.options?.config?.totalColor || COLORS.BLUE
   }),
   set: (val) => {
     ensureOptionsExists();

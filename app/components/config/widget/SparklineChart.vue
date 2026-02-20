@@ -68,6 +68,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { COLORS } from '~/utils/constants';
 import type { WidgetData } from '~~/types/dashboard';
 
 const props = defineProps<{
@@ -109,7 +110,7 @@ const sparklineType = computed({
 });
 
 const sparklineColor = computed({
-  get: () => chartConfig.value.options?.config?.sparklineColor || '#2196F3',
+  get: () => chartConfig.value.options?.config?.sparklineColor || COLORS.Default[0],
   set: (val) => {
     ensureOptionsExists();
     chartConfig.value.options!.config.sparklineColor = val;

@@ -27,7 +27,7 @@ export const chartDateIncludes: any = [
 ]
 
 export const tableIncludes: any = [
-    'combine_chart',
+    'basic_chart',
     'table',
     'coal_getting_group_company',
     'coal_exposed_chart',
@@ -38,7 +38,7 @@ export const tableIncludes: any = [
 ]
 
 export const chartLineIncludes: any = [
-    'combine_chart',
+    'basic_chart',
     'coal_getting_chart',
     'coal_getting_group_company',
     'coal_exposed_chart',

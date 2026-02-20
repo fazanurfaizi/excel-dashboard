@@ -5,7 +5,7 @@ import 'gridstack/dist/gridstack.min.css'
 // import 'gridstack/dist/gridstack-extra.css';
 
 export const widgets = ref<WidgetData[]>([])
-const widgetCustoms = ['combine_chart', 'table']
+const widgetCustoms = ['basic_chart', 'table']
 let grid: any | null = null
 
 export function initGrid(container: HTMLElement) {
@@ -214,7 +214,7 @@ function transformInner(item: any) {
 
     if (cfg.chart) {
         let textChart = ''
-        const series = cfg.chart?.series.map((v: any) => `${v.name} (${v.type})`).join(', ')
+        const series = cfg.chart?.series.map((v: any) => `${v.field} (${v.type})`).join(', ')
         if (series && cfg.chart?.type) textChart += `<li>Chart Type: ${cfg.chart.type}</li>`
         if (series) textChart += `<li>${series || '-'}</li>`
         if (textChart !== '') text += createList('Chart', textChart)

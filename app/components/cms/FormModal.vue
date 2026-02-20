@@ -16,9 +16,9 @@
               <q-btn-dropdown color="primary" label="Add Widget">
                 <q-list dense>
                   <q-item-label caption class="q-mx-sm q-my-sm text-uppercase text-bold">Custom</q-item-label>
-                  <q-item v-for="item in widgetOptions" :key="item.type" clickable @click="add(item.type)">
+                  <q-item v-for="item in widgetOptions" :key="item.value" clickable @click="add(item.value)">
                     <q-item-section avatar>
-                      <q-icon :name="getIcon(item.type)" color="grey-7" />
+                      <q-icon :name="getIcon(item.value)" color="grey-7" />
                     </q-item-section>
                     <q-item-section>{{ item.label }}</q-item-section>
                   </q-item>
@@ -70,6 +70,7 @@ import { initGrid, addWidget, getWidget, updateWidgetContent, removeWidget, remo
 
 import FormChart from '~/components/form/Chart.vue'
 import FormTable from '~/components/form/Table.vue'
+import { COLORS, WIDGET_OPTIONS } from '~/utils/constants'
 
 const props = defineProps<{ data?: { id?: string | number }, meta: any }>()
 const emit = defineEmits(['refreshEvent'])
@@ -106,18 +107,7 @@ const currentWidget = ref<WidgetData>()
 const gridContainer = ref<HTMLElement | null>(null)
 const widgets = ref<any[]>([])
 
-const COLORS = { RED: '#D32F2F', GREEN: '#388E3C', BLUE: '#1976D2', Rain: '#87c556', Plan: '#FC0000', Default: ['#0097A7', '#7B1FA2', '#C2185B'] }
-
-const widgetOptions = [
-  { label: 'Add Chart', type: 'combine_chart' },
-  { label: 'Add Waterfall', type: 'waterfall_chart' },
-  { label: 'Add Area Chart', type: 'area_chart' },
-  { label: 'Add Donut Chart', type: 'donut_chart' },
-  { label: 'Add Sparkline Chart', type: 'sparkline_chart' },
-  { label: 'Add Achievement Card', type: 'achievement_card' },
-  { label: 'Add Table', type: 'inventory' },
-
-]
+const widgetOptions = WIDGET_OPTIONS
 
 const init = () => {
   widgets.value = []
@@ -283,7 +273,7 @@ const updateWidget = (payload: any) => {
 }
 
 function getIcon(type: string) {
-  const map: Record<string, string> = { combine_chart: 'bar_chart', dashboard2: 'equalizer', waterfall_chart: 'waterfall_chart', dashboard4: 'area_chart', sparkline_chart: 'show_chart', achievementCard: 'military_tech', inventory: 'table_view', stockMovement: 'fast_forward', coalGettingWidget: 'stacked_bar_chart' }
+  const map: Record<string, string> = { basic_chart: 'bar_chart', dashboard2: 'equalizer', waterfall_chart: 'waterfall_chart', dashboard4: 'area_chart', sparkline_chart: 'show_chart', achievementCard: 'military_tech', inventory: 'table_view', stockMovement: 'fast_forward', coalGettingWidget: 'stacked_bar_chart' }
   return map[type] || 'widgets'
 }
 
