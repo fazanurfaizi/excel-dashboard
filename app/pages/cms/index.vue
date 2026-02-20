@@ -110,20 +110,7 @@ const init = async () => {
     ...Meta.model,
   })
 
-  await getSheet()
   await getData(1)
-}
-
-const getSheet = async () => {
-  loading.value = true
-  try {
-    const res: any = await $api.get('sheet?id=1UvYE60J1sxF0vYcF9SrztW7-Os_-uS3-_KC2U5MJ_-w')
-    loading.value = false
-    console.log(res)    
-  } catch (e) {
-    loading.value = false
-    console.error(e)
-  }
 }
 
 const getData = async (id: string | number) => {

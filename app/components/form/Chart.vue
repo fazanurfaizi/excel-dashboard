@@ -60,11 +60,11 @@
                     <thead class="bg-grey-1">
                       <tr>
                         <th style="width: 50px">Action</th>
-                        <MarkupTableThInput>Field ID</MarkupTableThInput>
-                        <MarkupTableThInput>Label</MarkupTableThInput>
-                        <MarkupTableThInput>Format</MarkupTableThInput>
-                        <MarkupTableThInput>Precision</MarkupTableThInput>
-                        <MarkupTableThInput>Aggregation</MarkupTableThInput>
+                        <markup-table-th-input>Field ID</markup-table-th-input>
+                        <markup-table-th-input>Label</markup-table-th-input>
+                        <markup-table-th-input>Format</markup-table-th-input>
+                        <markup-table-th-input>Precision</markup-table-th-input>
+                        <markup-table-th-input>Aggregation</markup-table-th-input>
                       </tr>
                     </thead>
                     <tbody>
@@ -77,12 +77,12 @@
                           <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delColumn(i)" />
                         </td>
                         <td class="bg-grey-1 text-grey-7">{{ v.name }}</td>
-                        <MarkupTableTdInput :i="i" v-model="v.label" />
-                        <MarkupTableTdInput :i="i" v-model="v.format" type="select" :options="optFormat" />
-                        <MarkupTableTdInput v-if="v.format === 'number'" :i="i" v-model="v.precision" type="number"
+                        <markup-table-td-input :i="i" v-model="v.label" type="input" />
+                        <markup-table-td-input :i="i" v-model="v.format" type="select" :options="optFormat" />
+                        <markup-table-td-input v-if="v.format === 'number'" :i="i" v-model="v.precision" type="number"
                           :precision="0" />
                         <td v-else class="bg-grey-2"></td>
-                        <MarkupTableTdInput v-if="v.format" :i="i" v-model="v.aggregation" type="select"
+                        <markup-table-td-input v-if="v.format" :i="i" v-model="v.aggregation" type="select"
                           :options="optAggregation[v.format]" />
                         <td v-else class="bg-grey-2"></td>
                       </tr>
@@ -140,80 +140,37 @@
 
                 <q-separator class="q-my-md" />
 
-                <ConfigChartQueryFilter v-model="dataModel.config.query.filters" :columns="rawData.cols" />
-
+                <config-chart-query-filter v-model="dataModel.config.query.filters" :columns="rawData.cols" />
               </q-tab-panel>
 
-              <q-tab-panel name="chart" v-if="!isTable">
-                <div class="row q-col-gutter-md q-mb-lg">
-                  <div class="col-12 col-md-6">
-                    <q-select v-model="dataModel.config.chart.x" label="X-Axis / Category Field"
-                      :options="dataModel.config.columns" :optionLabel="(v) => v.label || v.name" option-value="name"
-                      outlined dense map-options emit-value />
-                  </div>
+              <q-tab-panel name="chart" v-if="!isTable">                
+                <config-widget-combine-chart 
+                  v-if="isCombine" 
+                  v-model="dataModel.config.chart" 
+                  :columns="dataModel.config.columns" 
+                />
 
-                  <div class="col-12 col-md-6" v-if="isDonut">
-                    <q-select v-model="donutValueField" label="Value Field" :options="dataModel.config.columns"
-                      :optionLabel="(v) => v.label || v.name" option-value="name" outlined dense map-options
-                      emit-value />
-                  </div>
+                <config-widget-donut-chart 
+                  v-else-if="isDonut" 
+                  v-model="dataModel.config.chart" 
+                  :columns="dataModel.config.columns" 
+                />
 
-                  <div class="col-12 col-md-6" v-if="!isDonut && !isSparkline">
-                    <q-select v-model="dataModel.config.chart.legend" label="Legend / Grouping Field"
-                      :options="dataModel.config.columns" :optionLabel="(v) => v.label || v.name" option-value="name"
-                      outlined dense map-options emit-value clearable />
-                  </div>
-                </div>
+                <config-widget-waterfall-chart 
+                  v-else-if="isWaterfall" 
+                  v-model="dataModel.config.chart" 
+                  :columns="dataModel.config.columns" 
+                />
 
-                <div v-if="!isDonut">
-                  <div class="text-subtitle2 q-mb-sm row justify-between items-center">
-                    <span>Series Configuration (Y-Axis)</span>
-                    <q-btn flat dense icon="add" label="Add Series" color="primary" size="sm" @click="addSeries" />
-                  </div>
-
-                  <q-markup-table flat bordered dense wrap-cells separator="cell">
-                    <thead class="bg-grey-1">
-                      <tr>
-                        <th style="width: 50px"></th>
-                        <MarkupTableThInput>Field (Y-Axis)</MarkupTableThInput>
-                        <template v-if="isCombine">
-                          <MarkupTableThInput>Axis</MarkupTableThInput>
-                          <MarkupTableThInput>Type</MarkupTableThInput>
-                          <MarkupTableThInput>Mode</MarkupTableThInput>
-                        </template>
-
-                        <template v-if="isWaterfall">
-                          <MarkupTableThInput>Type (Relative/Total)</MarkupTableThInput>
-                        </template>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(v, i) in dataModel.config.chart.series" :key="i">
-                        <td class="text-center">
-                          <q-btn flat dense round color="negative" icon="delete" size="sm" @click="delSeries(i)" />
-                        </td>
-                        <MarkupTableTdInput :i="i" v-model="v.field" type="select" :options="dataModel.config.columns"
-                          :optionLabel="(col: any) => col.label || col.name" option-value="name" />
-                        <template v-if="isCombine">
-                          <MarkupTableTdInput :i="i" v-model="v.axis" type="select" :options="['y', 'y2']" />
-                          <MarkupTableTdInput :i="i" v-model="v.type" type="select"
-                            :options="['column', 'line', 'area', 'scatter']" />
-                          <MarkupTableTdInput v-if="v.type !== 'column'" :i="i" v-model="v.mode" type="select"
-                            :options="['lines', 'lines+markers', 'markers']" />
-                          <td v-else class="bg-grey-2" />
-                        </template>
-
-                        <template v-if="isWaterfall">
-                          <MarkupTableTdInput :i="i" v-model="v.mode" type="select" :options="['relative', 'total']" />
-                        </template>
-                      </tr>
-                    </tbody>
-                  </q-markup-table>
-                </div>
+                <config-widget-sparkline-chart 
+                  v-else-if="isSparkline" 
+                  v-model="dataModel.config.chart" 
+                  :columns="dataModel.config.columns" 
+                />
               </q-tab-panel>
 
               <q-tab-panel name="style" v-if="!isTable">
-                <ConfigChartStyle v-model="dataModel.config.chartStyles" />
+                <config-chart-style v-model="dataModel.config.chartStyles" />
               </q-tab-panel>
             </q-tab-panels>
           </q-card>

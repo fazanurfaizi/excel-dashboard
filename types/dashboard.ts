@@ -186,7 +186,7 @@ export interface WidgetData {
             series: {
                 field: string | null
                 axis: 'y' | 'y2'
-                type: 'auto' | 'scatter' | 'line' | 'column' | 'area'
+                type: 'auto' | 'scatter' | 'line' | 'column' | 'area' | 'pie'
                 mode?: 'lines' | 'markers' | 'text' | 'lines+markers' | 'lines+text' | 'markers+text' | 'lines+markers+text'
                 fill?: 'none' | 'tozeroy' | 'tonexty'
             }[]

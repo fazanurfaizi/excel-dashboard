@@ -1,99 +1,146 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <q-select
-      label="X Axis (Category)"
-      :model-value="config.dimensions?.[0]"
-      :options="columns"
-      @update:model-value="updateDimension"
-      outlined
-      dense
-      options-dense
-    />
+  <div class="col-12">
+    <div class="row q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md-6">
+        <q-select
+          v-model="chartConfig.x"
+          label="X-Axis (Category)"
+          :options="columns"
+          :option-label="(v: any) => v.label || v.name"
+          option-value="name"
+          emit-value
+          map-options
+          outlined
+          dense
+        />
+      </div>
 
-    <q-select
-      label="Y Axis (Value)"
-      :model-value="config.metrics?.[0]"
-      :options="columns"
-      @update:model-value="updateMetric"
-      outlined
-      dense
-      options-dense
-    />
-    
-    <q-select
-      label="Measure Column (Optional)"
-      hint="Column defining 'relative', 'total', 'absolute'"
-      :model-value="config.measureColumn"
-      :options="columns"
-      clearable
-      @update:model-value="updateMeasureColumn"
-      outlined
-      dense
-      options-dense
-    />
+      <div class="col-12 col-md-6">
+        <q-select
+          v-model="waterfallValueField"
+          label="Y-Axis (Value / Delta)"
+          :options="columns"
+          :option-label="(v: any) => v.label || v.name"
+          option-value="name"
+          emit-value
+          map-options
+          outlined
+          dense
+        />
+      </div>
+      
+      <div class="col-12">
+        <q-select
+          v-model="measureColumn"
+          label="Measure Column (Optional)"
+          hint="Kolom yang mendefinisikan tipe bar (relative, total, absolute)"
+          :options="columns"
+          :option-label="(v: any) => v.label || v.name"
+          option-value="name"
+          emit-value
+          map-options
+          outlined
+          dense
+          clearable
+        />
+      </div>
+    </div>
 
-    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2 grid grid-cols-2 gap-2">
-        <h4 class="col-span-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Colors</h4>
-        
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Increasing</label>
-          <input 
-            type="color" 
-            :value="config.styles?.increasingColor || '#2E7D32'"
-            @input="config.styles = { ...config.styles, increasingColor: ($event.target as HTMLInputElement).value }"
-            class="h-8 w-full cursor-pointer rounded border border-gray-300 p-0.5"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-xs text-gray-500 mb-1">Decreasing</label>
-          <input 
-            type="color" 
-            :value="config.styles?.decreasingColor || '#D32F2F'"
-            @input="config.styles = { ...config.styles, decreasingColor: ($event.target as HTMLInputElement).value }"
-            class="h-8 w-full cursor-pointer rounded border border-gray-300 p-0.5"
-          />
-        </div>
+    <q-separator class="q-my-md" />
 
-         <div class="col-span-2">
-          <label class="block text-xs text-gray-500 mb-1">Total</label>
-          <input 
-            type="color" 
-            :value="config.styles?.totalColor || '#1976D2'"
-            @input="config.styles = { ...config.styles, totalColor: ($event.target as HTMLInputElement).value }"
-            class="h-8 w-full cursor-pointer rounded border border-gray-300 p-0.5"
-          />
-        </div>
+    <div class="text-subtitle2 text-grey-8 q-mb-sm">Waterfall Colors</div>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-md-4">
+        <q-input v-model="colors.increasing" label="Increasing" outlined dense>
+          <template v-slot:append>
+            <q-icon name="colorize" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-color v-model="colors.increasing" no-header no-footer />
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <q-input v-model="colors.decreasing" label="Decreasing" outlined dense>
+          <template v-slot:append>
+            <q-icon name="colorize" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-color v-model="colors.decreasing" no-header no-footer />
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
+
+      <div class="col-12 col-md-4">
+        <q-input v-model="colors.total" label="Total" outlined dense>
+          <template v-slot:append>
+            <q-icon name="colorize" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-color v-model="colors.total" no-header no-footer />
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { type ChartConfig } from '~~/types/dashboard';
+import { computed } from 'vue';
+import type { WidgetData } from '~~/types/dashboard';
 
 const props = defineProps<{
-  modelValue: ChartConfig;
-  columns: string[];
+  modelValue: WidgetData['config']['chart'];
+  columns: WidgetData['config']['columns'];
 }>();
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: ChartConfig): void;
-}>();
+const emit = defineEmits(['update:modelValue']);
 
-const config = computed({
+const chartConfig = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
+  set: (val) => emit('update:modelValue', val)
 });
 
-const updateDimension = (val: string) => {
-  if (val) config.value.dimensions = [val];
+const ensureOptionsExists = () => {
+  if (!chartConfig.value.options) chartConfig.value.options = {};
+  if (!chartConfig.value.options.config) chartConfig.value.options.config = {};
 };
 
-const updateMetric = (val: string) => {
-  if (val) config.value.metrics = [val];
-};
+const waterfallValueField = computed({
+  get: () => chartConfig.value.series?.[0]?.field || null,
+  set: (val) => {
+    if (!chartConfig.value.series) chartConfig.value.series = [];
+    if (!chartConfig.value.series[0]) {
+      chartConfig.value.series[0] = { field: val, axis: 'y', type: 'auto' };
+    } else {
+      chartConfig.value.series[0].field = val;
+    }
+  }
+});
 
-const updateMeasureColumn = (val: string | null) => {
-  config.value.measureColumn = val || undefined;
-};
+const measureColumn = computed({
+  get: () => chartConfig.value.options?.config?.measureColumn || null,
+  set: (val) => {
+    ensureOptionsExists();
+    chartConfig.value.options!.config.measureColumn = val;
+  }
+});
+
+const colors = computed({
+  get: () => ({
+    increasing: chartConfig.value.options?.config?.increasingColor || '#2E7D32',
+    decreasing: chartConfig.value.options?.config?.decreasingColor || '#D32F2F',
+    total: chartConfig.value.options?.config?.totalColor || '#1976D2'
+  }),
+  set: (val) => {
+    ensureOptionsExists();
+    chartConfig.value.options!.config.increasingColor = val.increasing;
+    chartConfig.value.options!.config.decreasingColor = val.decreasing;
+    chartConfig.value.options!.config.totalColor = val.total;
+  }
+});
 </script>

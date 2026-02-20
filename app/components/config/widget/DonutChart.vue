@@ -1,77 +1,58 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <q-select
-      label="Labels (Dimension)"
-      :model-value="config.dimensions?.[0]"
-      :options="columns"
-      @update:model-value="updateDimension"
-      outlined
-      dense
-      options-dense
-    />
-
-    <q-select
-      label="Values (Metric)"
-      :model-value="config.metrics?.[0]"
-      :options="columns"
-      @update:model-value="updateMetric"
-      outlined
-      dense
-      options-dense
-    />
-    
-    <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Hole Size ({{ config.styles?.holeSize || 0.5 }})
-        </label>
-        <input 
-            type="range" 
-            min="0.1" 
-            max="0.9" 
-            step="0.1"
-            :value="config.styles?.holeSize || 0.5"
-            @input="updateHoleSize(($event.target as HTMLInputElement).value)"
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+  <div class="col-12">
+    <div class="row q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md-6">
+        <q-select 
+          v-model="chartConfig.x" 
+          label="Labels (Dimension / Category)" 
+          :options="columns" 
+          :option-label="(v) => v.label || v.name" 
+          option-value="name"
+          emit-value map-options outlined dense 
         />
-    </div>
-
-    <div class="flex items-center gap-2 mt-2">
-      <q-checkbox
-        :model-value="config.styles?.showLegend !== false"
-        @update:model-value="(val) => config.styles = { ...config.styles, showLegend: val }"
-        label="Show Legend"
-        dense
-      />
+      </div>
+      
+      <div class="col-12 col-md-6">
+        <q-select 
+          v-model="donutValueField" 
+          label="Values (Metric / Number)" 
+          :options="columns" 
+          :option-label="(v) => v.label || v.name" 
+          option-value="name"
+          emit-value map-options outlined dense 
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { type ChartConfig } from '~~/types/dashboard';
+import { computed } from 'vue';
+import type { WidgetData } from '~~/types/dashboard';
 
 const props = defineProps<{
-  modelValue: ChartConfig;
-  columns: string[];
+  modelValue: WidgetData['config']['chart'];
+  columns: WidgetData['config']['columns'];
 }>();
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: ChartConfig): void;
-}>();
+const emit = defineEmits(['update:modelValue']);
 
-const config = computed({
+const chartConfig = computed({
   get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val),
+  set: (val) => emit('update:modelValue', val)
 });
 
-const updateDimension = (val: string) => {
-  if (val) config.value.dimensions = [val];
-};
-
-const updateMetric = (val: string) => {
-  if (val) config.value.metrics = [val];
-};
-
-const updateHoleSize = (val: string) => {
-    config.value.styles = { ...config.value.styles, holeSize: parseFloat(val) };
-};
+const donutValueField = computed({
+  get: () => chartConfig.value.series?.[0]?.field || null,
+  set: (val) => {
+    if (!chartConfig.value.series) {
+      chartConfig.value.series = [];
+    }
+    if (!chartConfig.value.series[0]) {
+      chartConfig.value.series[0] = { field: val, axis: 'y', type: 'pie' };
+    } else {
+      chartConfig.value.series[0].field = val;
+    }
+  }
+});
 </script>

@@ -7,6 +7,16 @@
 <script setup lang="ts"></script>
 
 <style lang="scss" scoped>
+.col-editable {
+  background-color: #d5eeff !important;
+  color: #111111 !important;
+}
+
+.col-editable-child {
+  background-color: #e8f6ff !important;
+  color: #111111 !important;
+}
+
 .resizable-th {
   position: relative;
   user-select: none;
