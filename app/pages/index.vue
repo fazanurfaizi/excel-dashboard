@@ -27,29 +27,56 @@
         </q-card>
 
         <div class="dashboard-grid">
-            <div v-for="(item, i) in dataModel.widgets" :key="i" class="q-mb-sm dashboard-item" :style="getGridStyle(item)">
+            <div v-for="(item, i) in dataModel.widgets" :key="i" class="q-mb-sm widget" :style="getGridStyle(item)">
                 <q-card flat bordered class="q-px-sm q-py-md relative-position">
-                <div v-if="!item.loading" class="absolute-top-right q-pa-xs row q-gutter-sm no-wrap">
-                    <filter-date-widget v-if="chartDateIncludes.includes(item.type) && item.dates" v-model="dataModel.widgets[i]" @on-filter="forceFilterDate" />
+                    <div v-if="!item.loading" class="absolute-top-right q-pa-xs row q-gutter-sm no-wrap">
+                        <!-- <filter-date-widget v-if="item.dates" v-model="dataModel.widgets[i]" @on-filter="forceFilterDate" /> -->
 
-                    <q-btn flat round dense color="secondary" size="xs" icon="table_chart" @click="showTable(item)" v-if="tableIncludes.includes(item.type)">
-                        <q-tooltip>Show Raw Data Table</q-tooltip>
-                    </q-btn>
+                        <!-- <q-btn flat round dense color="secondary" size="xs" icon="table_chart" @click="showTable(item)">
+                            <q-tooltip>Show Raw Data Table</q-tooltip>
+                        </q-btn> -->
 
-                    <q-btn flat round dense color="secondary" size="xs" :icon="item.showLineLabel ? 'label' : 'label_off'" @click="fetchWidget(item, true)" v-if="chartLineIncludes.includes(item.type)">
-                        <q-tooltip>{{ item.showLineLabel ? 'Hide' : 'Show' }} Line Label</q-tooltip>
-                    </q-btn>
+                        <!-- <q-btn flat round dense color="secondary" size="xs" :icon="item.showLineLabel ? 'label' : 'label_off'" @click="fetchWidget(item, true)">
+                            <q-tooltip>{{ item.showLineLabel ? 'Hide' : 'Show' }} Line Label</q-tooltip>
+                        </q-btn> -->
 
-                    <q-btn flat round dense color="secondary" size="xs" icon="refresh" @click="fetchWidget(item)">
-                        <q-tooltip>Refresh Widget</q-tooltip>
-                    </q-btn>
-                </div>
-                <q-skeleton v-if="item.loading" :height="`${item.h * 50 + (item.title ? item.config?.title?.fontsize || 17 : 0)}px`" />
-                <template v-else>
-                    <div v-if="item.title" class="q-px-sm dash-title ellipsis">{{ item.title }}</div>
-                    <div v-else class="q-pb-sm"></div>
-                    <div :ref="(el: any) => setWidgetRef(el, item.id)" :id="item.id"></div>
-                </template>
+                        <q-btn flat round dense color="secondary" size="xs" icon="refresh" @click="fetchWidget(item)">
+                            <q-tooltip>Refresh Widget</q-tooltip>
+                        </q-btn>
+                    </div>
+                    <q-skeleton v-if="item.loading" :height="`${item.h * 50 + (item.title ? item.config?.title?.fontsize || 17 : 0)}px`" />
+                    <template v-else>
+                        <div v-if="item.title" class="q-px-sm dash-title ellipsis">{{ item.title }}</div>
+                        <div v-if="item.type === 'project_summary'" class="row q-gutter-sm q-px-sm q-pb-sm q-pt-xs">
+                            <q-select
+                                v-if="item.config?.summaryTemplate !== 'monitoring'"
+                                :model-value="getWidgetFilterValue(item, 'year')"
+                                @update:model-value="(val) => updateWidgetFilter(item, 'year', val)"
+                                :options="yearOptions"
+                                label="Tahun"
+                                dense
+                                outlined
+                                options-dense
+                                class="col-auto"
+                                style="min-width: 120px"
+                            />
+                            
+                            <q-select
+                                v-if="item.config?.summaryTemplate === 'monitoring'"
+                                :model-value="getWidgetFilterValue(item, 'pm')"
+                                @update:model-value="(val) => updateWidgetFilter(item, 'pm', val)"
+                                :options="picOptions"
+                                label="PIC"
+                                dense
+                                outlined
+                                options-dense
+                                class="col-auto"
+                                style="min-width: 150px"
+                            />
+                        </div>
+                        <div v-else class="q-pb-sm"></div>
+                        <div :ref="(el: any) => setWidgetRef(el, item.id)" :id="item.id"></div>
+                    </template>
                 </q-card>
             </div>
         </div>
@@ -70,7 +97,6 @@
 </template>
 
 <script setup lang="ts">
-import { chartDateIncludes, tableIncludes } from '~/utils/meta'
 import { enhanceXAxisDensity, getLayout, getConfig, applyChartStyles, applyTitleStyles } from '~/utils/chartHelper'
 import { buildRange } from '~/utils/dateHelper'
 import { useQuasar } from 'quasar'
@@ -110,6 +136,10 @@ const labelDate = computed(() => {
     return readDate(filter.value.date)
 })
 
+const currentYear = new Date().getFullYear()
+const yearOptions = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2]
+const picOptions = ref<string[]>(['All'])
+
 const chartStore = new Map<string, any>()
 const widgetRefs = new Map<string, HTMLElement>()
 
@@ -128,13 +158,9 @@ onMounted(async () => {
         window.Plotly = mod.default
     }
 
-    await $api.get('dashboard').then((res: any) => {
-        const data = res.data || res
-        loading.value = false
-        if (data) {
-            dataModel.value = data
-        }
-    })
+    await Promise.all([fetchDashboard(), fetchPms()])
+    loading.value = false
+
     await onRefresh()
 })
 
@@ -148,11 +174,59 @@ const forceFilterDate = async (t: any) => {
     if (t.dates) await fetchWidget(t, t.dates)
 }
 
+const getWidgetFilterValue = (item: any, filterName: string) => {
+    if (!item?.config?.query?.filters) return null
+    const filter = item.config.query.filters.find((f: any) => 
+        String(f.name).toLowerCase() === filterName.toLowerCase()
+    )
+    return filter ? filter.value : null
+}
+
+const updateWidgetFilter = async (item: any, filterName: string, value: any) => {
+    if (!item.config) item.config = {}
+    if (!item.config.query) item.config.query = { filters: [] }
+    if (!item.config.query.filters) item.config.query.filters = []
+    
+    const filterIndex = item.config.query.filters.findIndex((f: any) => 
+        String(f.name).toLowerCase() === filterName.toLowerCase()
+    )
+    
+    if (filterIndex > -1) {
+        if (value === 'All') {
+            item.config.query.filters.splice(filterIndex, 1)
+        } else {
+            item.config.query.filters[filterIndex].value = value
+        }
+    } else if (value !== 'All') {
+        item.config.query.filters.push({ name: filterName, operator: '=', value: value })
+    }
+
+    await fetchWidget(item)
+}
+
 const getGridStyle = (item: any) => {
   return {
     gridColumn: `${item.x + 1} / span ${item.w}`,
     gridRow: `${item.y + 1} / span ${item.h}`,
   }
+}
+
+const fetchDashboard = async () => {
+    await $api.get('dashboard').then((res: any) => {
+        const data = res.data || res        
+        if (data) {
+            dataModel.value = data
+        }
+    })
+}
+
+const fetchPms = async () => {
+    await $api.get('procurements/pms').then((res: any) => {
+        const data = res.data || res        
+        if (data) {
+            picOptions.value = ['All', ...data]
+        }
+    })
 }
 
 const fetchWidget = async (t: any, toggleLineLabel: boolean = true, forceDates: any = null) => {
@@ -210,7 +284,7 @@ const fetchWidget = async (t: any, toggleLineLabel: boolean = true, forceDates: 
 
     let dataApi: any = null
     t.loading = true
-    await $api.post('dashboard-item', req).then((r: any) => dataApi = r.data || r)
+    await $api.post('widget', req).then((r: any) => dataApi = r.data || r)
     t.loading = false
     t.dataApi = dataApi
     t.dates = unreactive(dates)
@@ -289,7 +363,7 @@ const submitDate = async () => {
     grid-auto-rows: auto;
   }
 
-  .dashboard-item {
+  .widget {
     grid-column: auto !important;
     grid-row: auto !important;
     display: flex;

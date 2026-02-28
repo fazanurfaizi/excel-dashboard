@@ -1,3 +1,5 @@
+import { ColumnConfig, DataRow, DataValue, WidgetRenderResult } from "~~/types/dashboard"
+
 function escapeHtml(unsafe: string): string {
     if (unsafe === null || unsafe === undefined) return ''
     return String(unsafe)
@@ -8,7 +10,7 @@ function escapeHtml(unsafe: string): string {
         .replace(/'/g, "&#039;")
 }
 
-function formatValue(col: any, val: any): string {
+function formatValue(col: ColumnConfig, val: DataValue): string {
     if (val === null || val === undefined) return '-'
 
     if (col.format === 'number') {
@@ -24,7 +26,7 @@ function formatValue(col: any, val: any): string {
 
     if (col.format === 'date' || col.format === 'datetime') {
         try {
-            const d = new Date(val)
+            const d = new Date(val as string | number | Date)
             const datePart = d.toLocaleDateString('en-GB', {
                 day: '2-digit',
                 month: 'short',
@@ -45,7 +47,11 @@ function formatValue(col: any, val: any): string {
     return escapeHtml(String(val))
 }
 
-export function renderTableWidget(rows: any[], columns: any[] | undefined): { html: string, charts: any[] } {
+export function renderTableWidget(
+    rows: DataRow[], 
+    columns: ColumnConfig[] | undefined,
+    height?: number
+): WidgetRenderResult {
     if (!columns || columns.length === 0) {
         return { html: "<div class='text-grey q-pa-md'>Column is not configured</div>", charts: [] }
     }
@@ -96,12 +102,15 @@ export function renderTableWidget(rows: any[], columns: any[] | undefined): { ht
     }
 
     const html = `
-        <div class="q-mt-sm q-markup-table q-table__container q-table__card q-table--flat q-table--dense q-table--no-wrap table-wrapper">
-        <table class="q-table">
-            <thead><tr>${thead}</tr></thead>
-            <tbody>${tbody}</tbody>
-            ${tfoot}
-        </table>
+        <div
+            class="q-mt-sm q-markup-table q-table__container q-table__card q-table--flat q-table--dense q-table--no-wrap table-wrapper"
+            style="min-height: ${height}px !important; max-height: ${height}px !important;"
+        >
+            <table class="q-table">
+                <thead><tr>${thead}</tr></thead>
+                <tbody>${tbody}</tbody>
+                ${tfoot}
+            </table>
         </div>
     `;
 

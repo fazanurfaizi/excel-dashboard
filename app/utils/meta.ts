@@ -16,37 +16,6 @@ export const Meta = {
     },
 }
 
-export const chartDateIncludes: any = [
-    'coal_getting_chart',
-    'coal_getting_group_company',
-    'coal_exposed_chart',
-    'coal_exposed_group_company',
-    'coal_hauling_chart_stacked',
-    'coal_hauling_chart_grouped',
-    'waterfall_ob',
-]
-
-export const tableIncludes: any = [
-    'basic_chart',
-    'table',
-    'coal_getting_group_company',
-    'coal_exposed_chart',
-    'coal_exposed_group_company',
-    'coal_hauling_chart_stacked',
-    'coal_hauling_chart_grouped',
-    'waterfall_ob',
-]
-
-export const chartLineIncludes: any = [
-    'basic_chart',
-    'coal_getting_chart',
-    'coal_getting_group_company',
-    'coal_exposed_chart',
-    'coal_exposed_group_company',
-    'coal_hauling_chart_stacked',
-    'coal_hauling_chart_grouped',
-]
-
 export const unreactive = <T>(arr: T): T => {
     try {
       return JSON.parse(JSON.stringify(arr))

@@ -40,6 +40,8 @@ export const installations = sqliteTable('installations', {
     pm: text('pm'),
     admin: text('admin'),
     sm: text('sm'),
+    // plan_oh: integer('plan_oh'),
+    // actual_oh: integer('actual_oh'),
     manpowerUpdate: integer('manpower_update'),
     epc: text('epc'),
     developer: text('developer'),

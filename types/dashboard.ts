@@ -35,7 +35,11 @@ export enum ComparisonOperator {
 
 export type ChartTimeframe = 'daily' | 'monthly' | 'yearly' | null | undefined
 export type AdditionalAxisType = 'line' | 'area' | 'stack' | 'group'
-export type MaterialType = string | undefined
+
+export type DataValue = string | number | boolean | Date | null | undefined
+export type DataRow = Record<string, DataValue>
+
+export type SumamryTemplate = 'monitoring' | 'executive' | null | undefined
 
 export enum SortDirection {
   ASC = 'ASC',
@@ -43,84 +47,82 @@ export enum SortDirection {
 }
 
 export interface WidgetStyle {
-  colSpan?: number;
-  rowSpan?: number;
-  height?: number;
-  backgroundColor?: string;
-  textColor?: string;
-  fontSize?: number;
-  textAlign?: 'left' | 'center' | 'right';
-  padding?: string;
-  border?: string;
-  borderRadius?: string;
+  colSpan?: number
+  rowSpan?: number
+  height?: number
+  backgroundColor?: string
+  textColor?: string
+  fontSize?: number
+  textAlign?: 'left' | 'center' | 'right'
+  padding?: string
+  border?: string
+  borderRadius?: string
 }
 
 export interface ChartStyle {
-  colorPalette?: string[];
-  showLegend?: boolean;
-  legendPosition?: 'top' | 'bottom' | 'left' | 'right';
-  showGrid?: boolean;
-  showXAxis?: boolean;
-  showYAxis?: boolean;
-  showTooltip?: boolean;
-  xAxisLabel?: string;
-  yAxisLabel?: string;
-  isStacked?: boolean;
-  fillArea?: boolean; // For line/area
-  holeSize?: number; // For donut
-  lineShape?: 'linear' | 'spline' | 'hv' | 'vh' | 'hvh' | 'vhv';
-  lineWidth?: number;
-  showMarkers?: boolean;
-  markerSize?: number;
-  // Waterfall specific
-  connectorLineColor?: string;
-  increasingColor?: string;
-  decreasingColor?: string;
-  totalColor?: string;
-  // Sparkline specific
-  sparklineType?: 'line' | 'bar' | 'area';
+  colorPalette?: string[]
+  showLegend?: boolean
+  legendPosition?: 'top' | 'bottom' | 'left' | 'right'
+  showGrid?: boolean
+  showXAxis?: boolean
+  showYAxis?: boolean
+  showTooltip?: boolean
+  xAxisLabel?: string
+  yAxisLabel?: string
+  isStacked?: boolean
+  fillArea?: boolean
+  holeSize?: number
+  lineShape?: 'linear' | 'spline' | 'hv' | 'vh' | 'hvh' | 'vhv'
+  lineWidth?: number
+  showMarkers?: boolean
+  markerSize?: number
+  connectorLineColor?: string
+  increasingColor?: string
+  decreasingColor?: string
+  totalColor?: string
+  sparklineType?: 'line' | 'bar' | 'area'
 }
 
 export interface FilterConfig {
-  column: string;
-  operator: ComparisonOperator;
-  value: any;
+  column: string
+  operator: ComparisonOperator
+  value: string | number | boolean | null
 }
 
 export interface SortConfig {
-  column: string;
-  direction: SortDirection;
+  column: string
+  direction: SortDirection
 }
 
 export interface ChartConfig {
-  title?: string;
-  type: WidgetType;
-  dataSource: string; // Sheet ID or table name
-  query?: string; // SQL query or similar
+  title?: string
+  type: WidgetType
+  dataSource: string // Sheet ID or table name
+  query?: string // SQL query or similar
 
   // Data Mapping
-  dimensions: string[]; // X-axis, Categories
-  metrics: string[]; // Y-axis, Values
+  dimensions: string[] // X-axis, Categories
+  metrics: string[] // Y-axis, Values
 
   // Advanced mapping
-  breakdown?: string; // Color/Group by
-  secondAxis?: string; // Secondary metric for combo charts
-  secondAxisType?: 'bar' | 'line'; // Type of the secondary axis chart
+  breakdown?: string // Color/Group by
+  secondAxis?: string // Secondary metric for combo charts
+  secondAxisType?: 'bar' | 'line' // Type of the secondary axis chart
 
   // Waterfall specific
-  measureColumn?: string; // Column defining 'relative', 'total', etc.
+  measureColumn?: string // Column defining 'relative', 'total', etc.
 
-  filters?: FilterConfig[];
-  sort?: SortConfig[];
-  limit?: number;
+  filters?: FilterConfig[]
+  sort?: SortConfig[]
+  limit?: number
 
-  styles?: ChartStyle;
+  styles?: ChartStyle
 }
 
 export interface AdditionalAxisConfig {
   type: AdditionalAxisType
   name: string
-  color?: any
+  color?: string
   show?: boolean
   lineDash?: string
 }
@@ -155,48 +157,51 @@ export interface FilterItem {
   value: string | number | null
 }
 
+export interface ColumnConfig {
+  id?: string
+  name: string
+  label?: string
+  format?: 'number' | 'date' | 'datetime' | 'string'
+  precision?: number | null
+  aggregation?: 'sum' | 'avg' | 'min' | 'max' | 'count' | null
+  datefilter?: boolean
+}
+
 export interface WidgetData {
   id?: string
   type: string
   title: string
   config: {
-    // spreadsheetId?: string | null
-    // sheetName?: string | null
-    dataSource?: string | null
-    // app: string | null
-    // endpoint: string | null
+    dataSource?: string[] | null
     query: {
       limit: number
       order: string
       applyFilterExactDateEnd?: boolean | null
       filters: FilterItem[]
     }
-    columns: {
-      id?: any
-      name?: any
-      label?: any
-      format?: any
-      precision?: number | null
-      aggregation?: any
-      datefilter?: boolean
-    }[]
+    columns: ColumnConfig[]
     chart: {
       type: 'scatter' | 'line' | 'column' | 'bar' | 'area' | 'pie'
       x: string | null
       series: {
-        field: string | null
+        field: string
+        name?: string
         axis: 'y' | 'y2'
         type: 'auto' | 'scatter' | 'line' | 'column' | 'area' | 'pie'
         mode?: 'lines' | 'markers' | 'text' | 'lines+markers' | 'lines+text' | 'markers+text' | 'lines+markers+text'
         fill?: 'none' | 'tozeroy' | 'tonexty'
       }[]
       legend: string | null
-      options?: { layout?: any; config?: any }
+      options?: {
+        layout?: Record<string, unknown>
+        config?: Record<string, unknown>
+      }
     }
-    colorSeries: ColorSeries[]    
+    summaryTemplate?: SumamryTemplate
+    colorSeries?: ColorSeries[]
     shows?: string[]
     timeframe?: ChartTimeframe
-    timeframeDefaultValue?: number | null    
+    timeframeDefaultValue?: number | null
     chartStyles?: ChartStyleConfig
     showLineLabel?: boolean | null
     title?: TitleConfig | null | undefined
@@ -206,6 +211,31 @@ export interface WidgetData {
   w?: number
   h?: number
 }
+
+export interface PlotlyTrace {
+  type?: string
+  mode?: string
+  name?: string
+  x?: DataValue[]
+  y?: DataValue[]
+  labels?: DataValue[]
+  values?: DataValue[]
+  yaxis?: string
+  fill?: string
+  orientation?: string
+  opacity?: number
+}
+
+export interface WidgetRenderResult {
+  html: string
+  charts: {
+    id: string
+    data: PlotlyTrace[]
+    layout: Record<string, unknown>
+    config: Record<string, unknown>
+  }[]
+}
+
 
 export interface Dashboard {
   id: number | null

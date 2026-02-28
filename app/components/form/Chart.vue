@@ -25,14 +25,32 @@
                 </div>
 
                 <div class="col-12 col-md-8">
-                  <q-select v-model="dataModel.config.dataSource" label="Data Source Table" :options="[
-                    { label: 'Procurements (Pengadaan)', value: 'procurements' },
-                    { label: 'Installations (Jasa Instalasi)', value: 'installations' }
-                  ]" emit-value map-options outlined dense @update:model-value="loadTableSchema" />
+                  <q-select
+                    v-model="dataModel.config.dataSource"
+                    label="Data Source Table"
+                    :options="[
+                      { label: 'Procurements (Pengadaan)', value: 'procurements' },
+                      { label: 'Installations (Jasa Instalasi)', value: 'installations' }
+                    ]"
+                    emit-value 
+                    map-options 
+                    outlined 
+                    dense 
+                    multiple 
+                    use-chips
+                    @update:model-value="loadTableSchema"
+                  />
                 </div>
                 <div class="col-12 col-md-4 flex flex-center">
-                  <q-btn label="Load Columns" color="secondary" icon="view_column" unelevated class="full-width"
-                    @click="loadTableSchema" :disable="!dataModel.config.dataSource" />
+                  <q-btn 
+                    label="Load Columns" 
+                    color="secondary" 
+                    icon="view_column" 
+                    unelevated 
+                    class="full-width"
+                    @click="loadTableSchema" 
+                    :disable="!dataModel.config.dataSource || dataModel.config.dataSource.length === 0" 
+                  />
                 </div>
               </div>
             </q-card-section>
@@ -199,15 +217,14 @@ if (!dataModel.value.config.query) dataModel.value.config.query = { limit: 0, or
 if (!dataModel.value.config.chart) dataModel.value.config.chart = { type: 'column', series: [], x: null, legend: null }
 if (!dataModel.value.config.chart.series) dataModel.value.config.chart.series = []
 if (!dataModel.value.config.columns) dataModel.value.config.columns = []
+if (!dataModel.value.config.dataSource) {
+  dataModel.value.config.dataSource = []
+} else if (typeof dataModel.value.config.dataSource === 'string') {
+  dataModel.value.config.dataSource = [dataModel.value.config.dataSource] 
+}
 
 
-const widgetTypeOptions = [
-  { label: 'Basic Chart (Bar/Line/Area)', value: 'basic_chart' },
-  { label: 'Donut Chart', value: 'donut_chart' },
-  { label: 'Waterfall Chart', value: 'waterfall_chart' },
-  { label: 'Sparkline', value: 'sparkline_chart' },
-  { label: 'Table', value: 'inventory' }
-]
+const widgetTypeOptions = WIDGET_OPTIONS
 
 const isTable = computed(() => dataModel.value.type === 'inventory' || dataModel.value.type === 'table')
 const isBasic = computed(() => ['basic_chart', 'bar_chart', 'area_chart'].includes(dataModel.value.type))
@@ -227,9 +244,29 @@ const optAggregation: Record<string, string[]> = {
 }
 
 const loadTableSchema = () => {
-  const selectedTable = dataModel.value.config.dataSource as string;
-  if (!selectedTable || !TABLE_SCHEMAS[selectedTable]) return;
-  rawData.value = { cols: TABLE_SCHEMAS[selectedTable] }
+  const selectedTables = dataModel.value.config.dataSource as string[];
+  
+  if (!selectedTables || !Array.isArray(selectedTables) || selectedTables.length === 0) {
+    rawData.value = { cols: [] };
+    return;
+  }
+
+  let combinedCols: any[] = [];
+  
+  selectedTables.forEach(table => {
+    if (TABLE_SCHEMAS[table]) {
+      // Prefix column names to avoid collisions (e.g., "procurements.id")
+      const tableCols = TABLE_SCHEMAS[table].map((col: any) => ({
+        ...col,
+        name: `${table}.${col.name}`, 
+        label: `${table} - ${col.label || col.name}`
+      }));
+      
+      combinedCols = [...combinedCols, ...tableCols];
+    }
+  });
+
+  rawData.value = { cols: combinedCols };
 }
 
 onMounted(() => {
