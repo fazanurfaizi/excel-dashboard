@@ -1,16 +1,16 @@
 <template>
   <q-page padding>
-    <spinner-loading v-if="loading" />
+    <general-spinner-loading v-if="loading" />
     <q-form v-else @submit="submit">
       <div class="row">
-        <Card title="General Info" col="12" use-top-section>
+        <general-card title="General Info" col="12" use-top-section>
           <template #top-section-right>
             <q-btn color="primary" label="Apply" type="button" @click="apply()" />
           </template>
           
           <q-input v-model="dataModel.code" label="Code" readonly />
           <q-input v-model="dataModel.name" label="Name" readonly />
-        </Card>
+        </general-card>
       </div>
 
       <div class="row">

@@ -164,7 +164,7 @@ export interface ColumnConfig {
   format?: 'number' | 'date' | 'datetime' | 'string'
   precision?: number | null
   aggregation?: 'sum' | 'avg' | 'min' | 'max' | 'count' | null
-  datefilter?: boolean
+  hideColumn?: boolean
 }
 
 export interface WidgetData {

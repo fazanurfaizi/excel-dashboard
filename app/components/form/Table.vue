@@ -63,7 +63,7 @@
                         <markup-table-th-input>Format</markup-table-th-input>
                         <markup-table-th-input>Precision</markup-table-th-input>
                         <markup-table-th-input>Aggregation</markup-table-th-input>
-                        <markup-table-th-input>Filter Date</markup-table-th-input>
+                        <markup-table-th-input>Hide Column</markup-table-th-input>
                       </tr>
                     </thead>
                     <tbody>
@@ -88,9 +88,7 @@
                           :options="optAggregation[v.format]" />
                         <td v-else class="bg-grey-2"></td>
 
-                        <markup-table-td-input v-if="['date', 'datetime'].includes(v.format)" :i="i"
-                          v-model="v.datefilter" type="checkbox" />
-                        <td v-else class="bg-grey-2"></td>
+                        <markup-table-td-input :i="i" v-model="v.hideColumn" type="checkbox" />
                       </tr>
                     </tbody>
                   </q-markup-table>
@@ -205,7 +203,7 @@ const addColumn = (col: any) => {
     format: col.format,
     precision: col.format === 'number' ? 0 : null,
     aggregation: null,
-    datefilter: false
+    hideColumn: false
   })
 }
 
