@@ -20,7 +20,6 @@
 
         <q-card-section class="modal-body scroll" :style="`height: ${autoHeight}`">
           <slot></slot>
-          <!-- <div class="q-py-lg"></div> -->
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -44,9 +43,8 @@ interface Configs {
 const emits = defineEmits(['update:modelValue', 'hide'])
 const props = defineProps({
   modelValue: { type: Object as () => Configs, required: true }
-  // noscroll: { type: Boolean, required: false },
 })
-const autoHeight = ref<string>('90vh')
+const autoHeight = ref<string>('50vh')
 let observer: ResizeObserver | null = null
 
 const dataModel = ref(props.modelValue)
@@ -64,11 +62,10 @@ const optimizeWidth = () => {
 const onHide = () => {
   dataModel.value.show = false
   emits('hide', false)
-  // emits('update:modelValue', dataModel.value)
 }
 
 const getHeight = (modalHeight: number | null = null) => {
-  let height = window.innerHeight // Use window height for responsive calculation
+  let height = window.innerHeight
   if (modalHeight) height = modalHeight
   else {
     const modalCard = document.querySelector('.modal-card')
@@ -110,8 +107,7 @@ watch(
 onUnmounted(() => {
   if (observer) {
     observer.disconnect()
-    observer = null
-    // console.log('Observer disconnected')
+    observer = null    
   }
 })
 

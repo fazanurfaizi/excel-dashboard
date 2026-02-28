@@ -34,7 +34,7 @@
                   </q-item-section>
                 </q-item>
                 
-                <q-item v-if="project?.status?.toLowerCase() === 'retensi'">
+                <q-item v-if="project?.status === 'Retens'">
                   <q-item-section>
                     <q-item-label caption>Tanggal Retensi</q-item-label>
                     <q-item-label class="text-negative text-weight-bold">{{ project?.note || '-' }}</q-item-label>
@@ -50,14 +50,14 @@
 
                 <q-item>
                   <q-item-section>
-                    <q-item-label caption>Current Progress Pekerjaan</q-item-label>
+                    <q-item-label caption>Progress Pekerjaan</q-item-label>
                     <q-item-label class="text-weight-bold text-positive">{{ currentProgress.project }}%</q-item-label>
                   </q-item-section>
                 </q-item>
 
                 <q-item>
                   <q-item-section>
-                    <q-item-label caption>Current Progress Keuangan</q-item-label>
+                    <q-item-label caption>Progress Keuangan</q-item-label>
                     <q-item-label class="text-weight-bold text-info">{{ currentProgress.finance }}%</q-item-label>
                   </q-item-section>
                 </q-item>

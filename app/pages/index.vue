@@ -1,7 +1,7 @@
 <template>
-  <q-page padding class="q-px-md q-py-sm">
+  <q-page padding class="q-px-md q-py-sm bg-grey-2">
     <general-spinner-loading v-if="loading" />
-    <q-card v-else flat style="border-radius: 8px 0px 0px 0px" class="q-pa-sm">
+    <q-card v-else flat style="border-radius: 8px 0px 0px 0px" class="q-pa-sm bg-transparent">
       <div class="row items-center q-mb-md q-col-gutter-md">
         <div class="col-12 col-md-6 flex items-center">
           <div class="text-h6 text-weight-bold">{{ dataModel.name }}</div>
@@ -63,7 +63,7 @@ definePageMeta({
 const dialog = ref<any>({
   show: false,
   type: 'detail',
-  title: 'Table Detail',
+  title: 'kurva S',
   props: null,
   maximize: false,
   persistent: false,
