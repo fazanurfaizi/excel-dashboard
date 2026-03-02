@@ -1,7 +1,7 @@
 <template>
-  <q-page padding class="q-px-md q-py-sm bg-grey-2">
+  <q-page padding class="q-px-md q-py-sm">
     <general-spinner-loading v-if="loading" />
-    <q-card v-else flat style="border-radius: 8px 0px 0px 0px" class="q-pa-sm bg-transparent">
+    <q-card v-else flat style="border-radius: 8px 0px 0px 0px" class="q-pa-sm">
       <div class="row items-center q-mb-md q-col-gutter-md">
         <div class="col-12 col-md-6 flex items-center">
           <div class="text-h6 text-weight-bold">{{ dataModel.name }}</div>
@@ -11,7 +11,7 @@
           <q-btn size="sm" icon="event" color="secondary" :label="labelYear" class="q-ma-sm">
             <q-menu cover anchor="top middle" ref="popupRef">
               <q-date minimal dense v-model="filter.year" default-view="Years" emit-immediately mask="YYYY" @update:model-value="submitYear">
-                <div class="q-py-sm text-h6 text-center text-primary">{{ labelYear }}</div>                
+                <div class="q-py-sm text-h6 text-center text-primary">{{ labelYear }}</div>
               </q-date>
             </q-menu>
           </q-btn>
@@ -20,25 +20,49 @@
     </q-card>
 
     <div class="dashboard-grid">
-      <div v-for="(item, i) in dataModel.widgets" :key="i" class="q-mb-sm widget" :style="getGridStyle(item)">
+      <div v-for="(item, i) in dataModel.widgets" :key="i" class="q-mb-sm widget dashboard-item"
+        :style="getGridStyle(item)">
         <q-card flat bordered class="q-px-sm q-py-md relative-position">
-          <div v-if="!item.loading" class="absolute-top-right q-pa-xs row q-gutter-sm no-wrap">
-            <q-btn flat round dense color="secondary" size="xs" icon="refresh" @click="fetchWidget(item)">
-              <q-tooltip>Refresh Widget</q-tooltip>
-            </q-btn>
-          </div>
           <q-skeleton v-if="item.loading"
             :height="`${item.h * 50 + (item.title ? item.config?.title?.fontsize || 17 : 0)}px`" />
+
           <template v-else>
-            <div v-if="item.title" class="q-px-sm dash-title ellipsis">{{ item.title }}</div>
-            
-            <div v-if="item.type === 'project_summary'" class="row q-gutter-sm q-px-sm q-pb-sm q-pt-xs">
-              <q-select v-if="item.config?.summaryTemplate === 'monitoring'"
-                :model-value="getWidgetFilterValue(item, 'pm')"
-                @update:model-value="(val) => updateWidgetFilter(item, 'pm', val)" :options="picOptions" label="PIC"
-                dense outlined options-dense class="col-auto" style="min-width: 150px" />
+            <div class="row items-center justify-between q-mb-sm">
+              <div class="row items-center no-wrap">
+                <div v-if="item.title" class="q-px-sm dash-title ellipsis text-subtitle2 text-weight-bold">{{ item.title
+                  }}</div>
+                <div class="q-pa-xs row q-gutter-sm no-wrap">
+                  <q-btn flat round dense color="secondary" size="xs" icon="refresh" @click="fetchWidget(item)">
+                    <q-tooltip>Refresh Widget</q-tooltip>
+                  </q-btn>
+                </div>
+              </div>
+
+              <div class="row items-center q-gutter-sm q-px-sm">
+                <q-btn size="sm" outline icon="event" color="primary" :label="getWidgetLabelYear(item)">
+                  <q-menu cover anchor="top middle" :ref="(el: any) => { if (el) menuRefs[item.id] = el }">
+                    <q-date minimal dense v-model="item._uiYear" default-view="Years" emit-immediately mask="YYYY"
+                      @update:model-value="applyWidgetYear(item)">
+                      <div class="q-py-sm text-subtitle1 text-center text-primary text-weight-bold">
+                        {{ getWidgetLabelYear(item) }}
+                      </div>
+                    </q-date>
+                  </q-menu>
+                </q-btn>
+
+                <q-select
+                  v-if="item.type === 'project_summary' && item.config?.summaryTemplate === 'monitoring'"
+                  :model-value="getWidgetFilterValue(item, 'pm') || 'All'"
+                  @update:model-value="(val) => updateWidgetFilter(item, 'pm', val)"
+                  :options="picOptions"
+                  label="PIC"
+                  dense
+                  outlined
+                  options-dense
+                  class="col-4"
+                />
+              </div>
             </div>
-            <div v-else class="q-pb-sm"></div>
 
             <div :ref="(el: any) => setWidgetRef(el, item.id)" :id="item.id" @click="handleWidgetClick"></div>
           </template>
@@ -47,7 +71,8 @@
     </div>
 
     <general-dialog v-model="dialog">
-      <dashboard-project-detail :project="selectedProjectData" />
+      <dashboard-project-detail v-if="dialog.type == 'project'" :project="dialog.props" />
+      <dashboard-summary-detail v-else-if="dialog.type == 'summary'" :project="dialog.props" />
     </general-dialog>
   </q-page>
 </template>
@@ -62,14 +87,12 @@ definePageMeta({
 
 const dialog = ref<any>({
   show: false,
-  type: 'detail',
-  title: 'kurva S',
+  type: 'project',
+  title: 'Dialog',
   props: null,
   maximize: false,
   persistent: false,
 })
-
-const selectedProjectData = ref<any>(null)
 
 const { registerPlotlyContainer } = usePlotlyAutoResize()
 const $api = useApi()
@@ -86,20 +109,28 @@ const dataModel = ref<any>({
 
 const loading = ref(false)
 
+const currentYear = new Date().getFullYear()
+
 const filter = ref<any>({
-  year: new Date().getFullYear().toString()
+  year: currentYear.toString()
 })
 
 const labelYear = computed(() => {
-  return `Tahun: ${filter.value.year}`
+  const y = filter.value.year
+  if (!y) return 'Pilih Tahun'
+  if (typeof y === 'string') return `Tahun: ${y}`
+  if (y.from && y.to) {
+    if (y.from === y.to) return `Tahun: ${y.from}`
+    return `Tahun: ${y.from} - ${y.to}`
+  }
+  return 'Pilih Tahun'
 })
 
 const picOptions = ref<string[]>(['All'])
-
 const chartStore = new Map<string, any>()
 const widgetRefs = new Map<string, HTMLElement>()
-
 const popupRef = ref<any>(null)
+const menuRefs = ref<Record<string, any>>({})
 
 const setWidgetRef = (el: HTMLElement | null, id: string) => {
   if (!el) return
@@ -109,8 +140,29 @@ const setWidgetRef = (el: HTMLElement | null, id: string) => {
 
 const handleWidgetClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement
-  const tr = target.closest('tr[data-row]')
 
+  const statusCard = target.closest('.hoverable-card[data-status-summary]')
+  if (statusCard) {
+    const summaryStr = statusCard.getAttribute('data-status-summary')
+    const statusName = statusCard.getAttribute('data-status-name')
+    if (summaryStr) {
+      try {
+        const breakdownData = JSON.parse(decodeURIComponent(summaryStr))
+
+        dialog.value.props = {
+          title: statusName || 'Detail',
+          data: breakdownData
+        }
+        dialog.value.type = 'summary'
+        dialog.value.show = true
+      } catch (e) {
+        console.error('Failed to parse status summary data', e)
+      }
+    }
+    return
+  }
+
+  const tr = target.closest('tr[data-row]')
   if (tr) {
     const rowDataStr = tr.getAttribute('data-row')
     if (rowDataStr) {
@@ -118,7 +170,8 @@ const handleWidgetClick = (event: MouseEvent) => {
         const rowData = JSON.parse(decodeURIComponent(rowDataStr))
 
         if (rowData && (rowData.progressData || rowData.projectCode)) {
-          selectedProjectData.value = rowData
+          dialog.value.props = rowData
+          dialog.value.type = 'project'
           dialog.value.show = true
         }
       } catch (e) {
@@ -149,10 +202,57 @@ const onRefresh = async () => {
   }
 }
 
+const initWidgetYear = (item: any) => {
+  const yearFilters = item?.config?.query?.filters?.filter((f: any) => f.name === 'year' && !f.isGlobalYear) || []
+  if (yearFilters.length === 0) {
+    item._uiYear = null // Fallback to global
+  } else if (yearFilters.length === 1 && yearFilters[0].operator === '=') {
+    item._uiYear = yearFilters[0].value.toString()
+  } else if (yearFilters.length >= 2) {
+    const from = yearFilters.find((f: any) => ['>=', '>'].includes(f.operator))?.value
+    const to = yearFilters.find((f: any) => ['<=', '<'].includes(f.operator))?.value
+    if (from && to) item._uiYear = { from: from.toString(), to: to.toString() }
+  }
+}
+
+const getWidgetLabelYear = (item: any) => {
+  const y = item._uiYear || filter.value.year
+  if (!y) return 'Pilih Tahun'
+  if (typeof y === 'string') return `Tahun: ${y}`
+  if (y.from && y.to) {
+    if (y.from === y.to) return `Tahun: ${y.from}`
+    return `Tahun: ${y.from} - ${y.to}`
+  }
+  return 'Pilih Tahun'
+}
+
+const applyWidgetYear = async (item: any) => {
+  if (menuRefs.value[item.id]) {
+    menuRefs.value[item.id].hide()
+  }
+
+  const val = item._uiYear
+  if (!item.config) item.config = {}
+  if (!item.config.query) item.config.query = { filters: [] }
+
+  item.config.query.filters = item.config.query.filters.filter((f: any) => f.name !== 'year')
+
+  if (val) {
+    if (typeof val === 'string') {
+      item.config.query.filters.push({ name: 'year', operator: '=', value: Number(val), isGlobalYear: false })
+    } else if (val.from && val.to) {
+      item.config.query.filters.push({ name: 'year', operator: '>=', value: Number(val.from), isGlobalYear: false })
+      item.config.query.filters.push({ name: 'year', operator: '<=', value: Number(val.to), isGlobalYear: false })
+    }
+  }
+
+  await fetchWidget(item)
+}
+
 const getWidgetFilterValue = (item: any, filterName: string) => {
   if (!item?.config?.query?.filters) return null
   const filterParam = item.config.query.filters.find((f: any) =>
-    String(f.name).toLowerCase() === filterName.toLowerCase()
+    String(f.name).toLowerCase() === filterName.toLowerCase() && !f.isGlobalYear
   )
   return filterParam ? filterParam.value : null
 }
@@ -162,18 +262,10 @@ const updateWidgetFilter = async (item: any, filterName: string, value: any) => 
   if (!item.config.query) item.config.query = { filters: [] }
   if (!item.config.query.filters) item.config.query.filters = []
 
-  const filterIndex = item.config.query.filters.findIndex((f: any) =>
-    String(f.name).toLowerCase() === filterName.toLowerCase()
-  )
+  item.config.query.filters = item.config.query.filters.filter((f: any) => f.name !== filterName)
 
-  if (filterIndex > -1) {
-    if (value === 'All') {
-      item.config.query.filters.splice(filterIndex, 1)
-    } else {
-      item.config.query.filters[filterIndex].value = value
-    }
-  } else if (value !== 'All') {
-    item.config.query.filters.push({ name: filterName, operator: '=', value: value })
+  if (value !== 'All') {
+    item.config.query.filters.push({ name: filterName, operator: '=', value: value, isGlobalYear: false })
   }
 
   await fetchWidget(item)
@@ -190,6 +282,9 @@ const fetchDashboard = async () => {
   await $api.get('dashboard').then((res: any) => {
     const data = res.data || res
     if (data) {
+      if (data.widgets && Array.isArray(data.widgets)) {
+        data.widgets.forEach((w: any) => initWidgetYear(w))
+      }
       dataModel.value = data
     }
   })
@@ -204,7 +299,7 @@ const fetchPms = async () => {
   })
 }
 
-const fetchWidget = async (t: any, toggleLineLabel: boolean = true) => {
+const fetchWidget = async (t: any) => {
   if (!t.config) t.config = {}
   if (!t.config.chartStyles) t.config.chartStyles = {}
   if (!t.config.chartStyles.lineLabels) t.config.chartStyles.lineLabels = { show: true }
@@ -212,18 +307,23 @@ const fetchWidget = async (t: any, toggleLineLabel: boolean = true) => {
   if (!t.config.query) t.config.query = { filters: [] }
   if (!t.config.query.filters) t.config.query.filters = []
 
-  t.config.query.filters = t.config.query.filters.filter((f: any) => !f.isGlobalYear && f.name !== 'year')
-  
-  t.config.query.filters.push({
-    name: 'year',
-    operator: '=',
-    value: Number(filter.value.year),
-    isGlobalYear: true
-  })
+  t.config.query.filters = t.config.query.filters.filter((f: any) => !f.isGlobalYear)
+
+  const hasLocalYearFilter = t.config.query.filters.some((f: any) => f.name === 'year' && !f.isGlobalYear)
+
+  if (!hasLocalYearFilter && filter.value.year) {
+    const y = filter.value.year
+    if (typeof y === 'string') {
+      t.config.query.filters.push({ name: 'year', operator: '=', value: Number(y), isGlobalYear: true })
+    } else if (y && y.from && y.to) {
+      t.config.query.filters.push({ name: 'year', operator: '>=', value: Number(y.from), isGlobalYear: true })
+      t.config.query.filters.push({ name: 'year', operator: '<=', value: Number(y.to), isGlobalYear: true })
+    }
+  }
 
   const req = {
     type: t.type,
-    height: t.h * 50,
+    height: t.h * 50 - 30,
     title: t.title,
     config: t.config,
   }
@@ -244,9 +344,12 @@ const renderHtmlItem = async (t: any) => {
   const el = widgetRefs.get(t.id)
   if (!el || !data) return
 
-  const titleEl = el.previousElementSibling as HTMLElement
-  if (titleEl && titleEl.classList.contains('dash-title')) {
-    applyTitleStyles(titleEl, t.config?.title)
+  const container = el.parentElement?.parentElement
+  if (container) {
+    const titleEl = container.querySelector('.dash-title') as HTMLElement
+    if (titleEl) {
+      applyTitleStyles(titleEl, t.config?.title)
+    }
   }
 
   if (data.html) render(el, data.html)
@@ -287,7 +390,6 @@ const renderStoredCharts = (containerEl: HTMLElement, chartIds: string[], screen
 
 const submitYear = async () => {
   popupRef.value?.hide()
-
   await onRefresh()
 }
 </script>
@@ -302,9 +404,20 @@ const submitYear = async () => {
 
 .hoverable-row {
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .hoverable-row:hover {
+  background-color: #e0f2fe !important;
+}
+
+.hoverable-card {
+  transition: all 0.2s ease;
+}
+
+.hoverable-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: #e0f2fe !important;
 }
 

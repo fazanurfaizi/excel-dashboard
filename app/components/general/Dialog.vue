@@ -1,24 +1,38 @@
 <template>
   <div>
-    <q-dialog v-model="dataModel.show" @hide="onHide()" transition-show="fade" transition-hide="fade" backdrop-filter="blur(3px)" :maximized="dataModel.maximize" :persistent="dataModel.persistent" full-height>
-      <q-card v-if="dataModel.show" style="overflow: hidden" class="modal-card" :style="!dataModel.maximize ? `max-width: 98vw; width: ${optimizeWidth()};` : ''">
-        <q-bar class="modal-bar">
+    <q-dialog 
+      v-model="dataModel.show" 
+      @hide="onHide()" 
+      transition-show="fade" 
+      transition-hide="fade" 
+      backdrop-filter="blur(3px)" 
+      :maximized="dataModel.maximize" 
+      :persistent="dataModel.persistent"
+    >
+      <q-card 
+        v-if="dataModel.show" 
+        class="modal-card column" 
+        :style="!dataModel.maximize ? `max-width: 98vw; width: ${optimizeWidth()}; max-height: 90vh;` : ''"
+      >      
+        <!-- <q-bar class="modal-bar">
           <div class="text-bold text-light">{{ dataModel.title }}</div>
           <q-space />
-          <q-btn dense flat icon="minimize" @click="dataModel.maximize = false" :disable="!dataModel.maximize">
+          
+          <q-btn dense flat icon="minimize" @click="toggleMaximize(false)" :disable="!dataModel.maximize">
             <q-tooltip v-if="dataModel.maximize" class="bg-white text-primary">Minimize</q-tooltip>
           </q-btn>
-          <q-btn dense flat icon="crop_square" @click="dataModel.maximize = true" :disable="dataModel.maximize">
+          <q-btn dense flat icon="crop_square" @click="toggleMaximize(true)" :disable="dataModel.maximize">
             <q-tooltip v-if="!dataModel.maximize" class="bg-white text-primary">Maximize</q-tooltip>
           </q-btn>
+          
           <q-btn dense flat icon="close" v-close-popup @click="onHide()">
             <q-tooltip class="bg-white text-primary">Close</q-tooltip>
           </q-btn>
         </q-bar>
+        
+        <q-separator /> -->
 
-        <q-separator />
-
-        <q-card-section class="modal-body scroll" :style="`height: ${autoHeight}`">
+        <q-card-section class="modal-body scroll full-width" :key="renderKey">    
           <slot></slot>
         </q-card-section>
       </q-card>
@@ -28,7 +42,7 @@
 
 <script setup lang="ts">
 import { Screen } from 'quasar'
-import { nextTick, ref, watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 
 interface Configs {
   [props: string]: any
@@ -44,19 +58,18 @@ const emits = defineEmits(['update:modelValue', 'hide'])
 const props = defineProps({
   modelValue: { type: Object as () => Configs, required: true }
 })
-const autoHeight = ref<string>('50vh')
-let observer: ResizeObserver | null = null
 
-const dataModel = ref(props.modelValue)
+const dataModel = ref({ ...props.modelValue })
+const renderKey = ref(0)
+
 if (dataModel.value.width === undefined) dataModel.value.width = '60vw'
-if (Screen.lt.sm) dataModel.value.maximize = true
-else dataModel.value.maximize = dataModel.value.maximize || false
 if (dataModel.value.persistent === undefined) dataModel.value.persistent = true
 
+if (Screen.lt.sm) dataModel.value.maximize = true
+else dataModel.value.maximize = dataModel.value.maximize || false
+
 const optimizeWidth = () => {
-  let res = dataModel.value.width
-  if (Screen.lt.md) res = '95vw'
-  return res
+  return Screen.lt.md ? '95vw' : dataModel.value.width
 }
 
 const onHide = () => {
@@ -64,59 +77,41 @@ const onHide = () => {
   emits('hide', false)
 }
 
-const getHeight = (modalHeight: number | null = null) => {
-  let height = window.innerHeight
-  if (modalHeight) height = modalHeight
-  else {
-    const modalCard = document.querySelector('.modal-card')
-    if (modalCard) height = modalCard.getBoundingClientRect().height
-  }
-
-  const modalBar = document.querySelector('.modal-bar')
-  if (modalBar) height -= modalBar.getBoundingClientRect().height
-  autoHeight.value = `${height}px`
+const toggleMaximize = (isMaximized: boolean) => {
+  dataModel.value.maximize = isMaximized
+  setTimeout(() => {
+    renderKey.value++
+  }, 300)
 }
 
 watch(
   () => props.modelValue?.show,
   (newVal) => {
-    dataModel.value = props.modelValue
-    if (newVal) {
-      nextTick(() => {
-        const modalCard = document.querySelector('.modal-card')
-        if (modalCard) {
-          observer = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-              const height = entry.contentRect.height
-              if (height) getHeight(height)
-            }
-          })
-          observer.observe(modalCard)
-        }
-      })
-    }
+    dataModel.value = { ...props.modelValue }
+    if (newVal) renderKey.value++
   }
 )
+
 watch(
   () => dataModel,
   (_newVal) => {
     emits('update:modelValue', dataModel.value)
-  }
+  },
+  { deep: true }
 )
 
-onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
-    observer = null    
+const handlePopState = () => onHide()
+
+watch(() => dataModel.value.show, (val) => {
+  if (val) {
+    history.pushState(null, '', location.href)
+    window.addEventListener('popstate', handlePopState)
+  } else {
+    window.removeEventListener('popstate', handlePopState)
   }
 })
 
-watch(dataModel.value, (val) => {
-  if (val) {
-    history.pushState(null, '', location.href)
-    window.addEventListener('popstate', onHide)
-  } else {
-    window.removeEventListener('popstate', onHide)
-  }
+onUnmounted(() => {
+  window.removeEventListener('popstate', handlePopState)
 })
 </script>

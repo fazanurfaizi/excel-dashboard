@@ -17,6 +17,8 @@ export function renderProjectSummaryWidget(
         'Retensi': 0
     }
 
+    const breakdownAgg: Record<string, Record<string, Record<string, number>>> = {}
+
     // Process the raw rows
     rows.forEach(row => {
         if (row['procurements.id']) procurementCount++;
@@ -28,14 +30,24 @@ export function renderProjectSummaryWidget(
             if (!isNaN(cap)) totalCapacity += cap;
 
             const status = String(row['installations.status'] || '').trim();
+            const pic = String(row['installations.pm'] || '-').trim();
+            const year = String(row['installations.year'] || '-').trim();
+
             if (status) {
                 const matchedKey = Object.keys(statusCounts).find(k => k.toLowerCase() === status.toLowerCase());
+                const finalStatusKey = matchedKey || status;
                 
-                // FIXED: Changed check from truthiness to undefined so '0' counts can increment
-                if (matchedKey && statusCounts[matchedKey]) { 
+                if (matchedKey && statusCounts[matchedKey] !== undefined) { 
                     statusCounts[matchedKey]++;
                 } else if (status !== 'undefined' && status !== 'null') {
-                    statusCounts[status] = (statusCounts[status] || 0) + 1;
+                    statusCounts[finalStatusKey] = (statusCounts[finalStatusKey] || 0) + 1;
+                }
+
+                // Masukkan data ke Aggregation
+                if (finalStatusKey !== 'undefined' && finalStatusKey !== 'null') {
+                    if (!breakdownAgg[finalStatusKey]) breakdownAgg[finalStatusKey] = {};
+                    if (!breakdownAgg[finalStatusKey][pic]) breakdownAgg[finalStatusKey][pic] = {};
+                    breakdownAgg[finalStatusKey][pic][year] = (breakdownAgg[finalStatusKey][pic][year] || 0) + 1;
                 }
             }
         }
@@ -43,7 +55,22 @@ export function renderProjectSummaryWidget(
 
     const totalProjects = procurementCount + installationCount;
 
-    // Main wrapper with a subtle background to make internal white cards pop
+    const encodeBreakdown = (statusKey: string) => {
+        const data = breakdownAgg[statusKey] || {};
+        const result: { pic: string, year: string, count: number }[] = [];
+        
+        for (const pic of Object.keys(data)) {
+            if (data[pic]) {
+                for (const year of Object.keys(data[pic])) {
+                    result.push({ pic, year, count: data[pic][year]! });
+                }
+            }
+        }
+        // Urutkan berdasarkan Tahun (descending), lalu Count (descending)
+        result.sort((a, b) => b.year.localeCompare(a.year) || b.count - a.count);
+        return encodeURIComponent(JSON.stringify(result));
+    }
+
     let html = `<div class="q-pa-md bg-grey-1 rounded-borders" style="font-family: sans-serif;" style="min-height: ${height}px !important; max-height: ${height}px !important;">`;
 
     if (templateType === 'monitoring') {
@@ -86,25 +113,25 @@ export function renderProjectSummaryWidget(
             <div class="text-subtitle2 text-weight-bold text-grey-9 q-mb-md text-center text-uppercase">Status Project</div>
             <div class="row q-col-gutter-sm text-center">
                 <div class="col-6">
-                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height">
+                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height cursor-pointer hoverable-card" data-status-summary="${encodeBreakdown('On Going')}" data-status-name="On Going">
                         <div class="text-caption text-grey-8 q-mb-xs">Ongoing</div>
                         <div class="text-h6 text-weight-bold text-primary">${statusCounts['On Going'] || 0}</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height">
+                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height cursor-pointer hoverable-card" data-status-summary="${encodeBreakdown('Close')}" data-status-name="Close">
                         <div class="text-caption text-grey-8 q-mb-xs">Closed</div>
                         <div class="text-h6 text-weight-bold text-positive">${statusCounts['Close'] || 0}</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height">
+                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height cursor-pointer hoverable-card" data-status-summary="${encodeBreakdown('Menunggu TTD BAST')}" data-status-name="Menunggu BAST">
                         <div class="text-caption text-grey-8 q-mb-xs" style="line-height: 1.2">Menunggu BAST</div>
                         <div class="text-h6 text-weight-bold text-warning">${statusCounts['Menunggu TTD BAST'] || 0}</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height">
+                    <div class="bg-grey-2 rounded-borders q-pa-sm full-height cursor-pointer hoverable-card" data-status-summary="${encodeBreakdown('Retensi')}" data-status-name="Retensi">
                         <div class="text-caption text-grey-8 q-mb-xs">Retensi</div>
                         <div class="text-h6 text-weight-bold text-info">${statusCounts['Retensi'] || 0}</div>
                     </div>
