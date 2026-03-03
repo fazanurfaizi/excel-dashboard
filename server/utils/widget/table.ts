@@ -73,7 +73,13 @@ export function renderTableWidget(
       }
     }).join('')
 
-    const rowJson = encodeURIComponent(JSON.stringify(row))
+    const normalizedRow: Record<string, any> = {}
+    for (const [key, value] of Object.entries(row)) {
+      const cleanKey = key.includes('.') ? key.split('.').pop() as string : key
+      normalizedRow[cleanKey] = value
+    }
+
+    const rowJson = encodeURIComponent(JSON.stringify(normalizedRow))
     tbody += `<tr class="cursor-pointer hoverable-row" data-row="${rowJson}">${tds}</tr>`
   }
 

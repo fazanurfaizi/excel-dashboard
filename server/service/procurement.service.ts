@@ -12,7 +12,5 @@ export async function getProcurementPMs() {
         .orderBy(asc(installations.pm))
         .all()
 
-    console.log(results)
-
     return results.map((row) => row.pm).filter(Boolean)
 }

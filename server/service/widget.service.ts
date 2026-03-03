@@ -11,7 +11,7 @@ interface WidgetRequestParams {
 }
 
 export async function processWidgetGeneration(req: WidgetRequestParams): Promise<WidgetRenderResult> {
-    const rows = await fetchAndAggregateWidgetData(req.config)
+    const rows = await fetchAndAggregateWidgetData(req.config, req.type)
 
     let html = ''
     let charts: WidgetRenderResult['charts'] = []

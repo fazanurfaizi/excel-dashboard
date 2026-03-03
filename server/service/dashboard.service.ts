@@ -34,7 +34,7 @@ export async function getClientDashboard(id: number = 1) {
     }
 }
 
-export async function fetchAndAggregateWidgetData(config: WidgetData['config']): Promise<DataRow[]> {
+export async function fetchAndAggregateWidgetData(config: WidgetData['config'], widgetType: string): Promise<DataRow[]> {
     if (!config.dataSource || config.dataSource.length === 0) {
         throw createError({ statusCode: 400, message: "No data source specified." })
     }
@@ -42,6 +42,10 @@ export async function fetchAndAggregateWidgetData(config: WidgetData['config']):
     const db = useDrizzle()
 
     const dataSources = Array.isArray(config.dataSource) ? config.dataSource : [config.dataSource]
+    if (widgetType === 'table' && !dataSources.includes('notes')) {
+        dataSources.push('notes')
+    }
+
     let allRawRows: DrizzleRow[] = []
 
     for (const source of dataSources) {

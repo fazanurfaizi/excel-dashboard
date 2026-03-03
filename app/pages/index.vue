@@ -182,6 +182,7 @@ const handleWidgetClick = (event: MouseEvent) => {
           title: statusName || 'Detail',
           data: breakdownData
         }
+        dialog.value.title = statusName
         dialog.value.type = 'summary'
         dialog.value.show = true
       } catch (e) {
@@ -201,6 +202,7 @@ const handleWidgetClick = (event: MouseEvent) => {
         if (rowData && (rowData.progressData || rowData.projectCode)) {
           dialog.value.props = rowData
           dialog.value.type = 'project'
+          dialog.value.title = `${rowData?.projectName} (${rowData?.projectCode})`
           dialog.value.show = true
         }
       } catch (e) {

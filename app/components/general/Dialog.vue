@@ -11,7 +11,7 @@
     >
       <q-card 
         v-if="dataModel.show" 
-        class="modal-card" 
+        class="modal-card column no-wrap" 
         :style="!dataModel.maximize ? `max-width: 98vw; width: ${optimizeWidth()}; max-height: 90vh;` : ''"
       >      
         <q-bar class="modal-bar full-width bg-grey-3 text-dark">

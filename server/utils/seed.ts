@@ -1,6 +1,6 @@
 import type { Db, Tx } from '~~/server/utils/db'
 import { procurements, installations, notes } from '~~/server/database/schema'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, or } from 'drizzle-orm'
 
 export function syncProcurementData(db: Db, data: any[], year: number) {
   const records = data
@@ -114,8 +114,6 @@ export function syncInstallationData(db: Db, rawData: any[][], year: number) {
 
     if (records.length === 0) return
 
-    // db.transaction((tx: Tx) => {
-    // })
     db.delete(installations).where(eq(installations.year, year)).run()
     db.insert(installations).values(records).run()
   }
@@ -207,17 +205,21 @@ export async function syncNotesData(db: Db, rawData: any[], currentYear: string)
 
   const uniqueCombos = Array.from(new Set(records.map(r => `${r.pm}|${r.project_name}|${r.year}`)));
 
-  for (const combo of uniqueCombos) {
+  const deleteConditions = uniqueCombos.map(combo => {
     const [p_pm, p_name, p_year] = combo.split('|');
-
-    db.delete(notes).where(
-      and(
-        eq(notes.pm, p_pm || ''),
-        eq(notes.project_name, p_name || ''),
-        eq(notes.year, parseInt(p_year || '0'))
-      )
+    
+    return and(
+      eq(notes.pm, p_pm || ''),
+      eq(notes.project_name, p_name || ''),
+      eq(notes.year, parseInt(p_year || '0'))
     );
-  }
+  });
+
+  if (deleteConditions.length > 0) {
+    db.delete(notes)
+      .where(or(...deleteConditions))
+      .run();
+    }
 
   db.insert(notes).values(records).run()
 }
