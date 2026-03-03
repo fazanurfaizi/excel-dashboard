@@ -59,13 +59,25 @@ export function renderTableWidget(
     return { html: "<div class='text-grey q-pa-md'>No data</div>", charts: [] }
   }
 
+  const cleanRows = rows.filter(row => {
+    return Object.values(row).some(val => {
+      if (val === undefined || val === null || val === '') return false;
+      if (typeof val === 'object' && Object.keys(val).length === 0) return false;
+      return true;
+    });
+  });
+
+  if (cleanRows.length === 0) {
+    return { html: "<div class='text-grey q-pa-md'>No data</div>", charts: [] }
+  }
+
   const cols = columns
   const thead = cols.map((col) => {
     if (!col.hideColumn) return `<th class="text-center">${escapeHtml(col.label || col.id || col.name || '')}</th>`
   }).join('')
 
   let tbody = ''
-  for (const row of rows) {
+  for (const row of cleanRows) {
     const tds = cols.map((col) => {
       if (!col.hideColumn) {
         const cls = col.format === 'number' ? 'class="text-right"' : ''
@@ -83,34 +95,6 @@ export function renderTableWidget(
     tbody += `<tr class="cursor-pointer hoverable-row" data-row="${rowJson}">${tds}</tr>`
   }
 
-  let tfoot = ""
-  const hasAgg = cols.some(c => c.aggregation)
-  if (hasAgg) {
-    const fds = cols.map(c => {
-      if (c.format === "number") {
-        const values = rows.map(r => Number(r[c.id || c.name])).filter(v => !isNaN(v))
-        if (values.length > 0) {
-          const sum = values.reduce((a, b) => a + b, 0)
-          const mean = sum / values.length
-          const min = Math.min(...values)
-          const max = Math.max(...values)
-
-          return `
-            <td class="text-right">
-              <div class="row justify-between"><div>Σ</div><div>${formatValue(c, sum)}</div></div>
-              <div class="row justify-between"><div>μ</div><div>${formatValue(c, mean)}</div></div>
-              <div class="row justify-between"><div>↓</div><div>${formatValue(c, min)}</div></div>
-              <div class="row justify-between"><div>↑</div><div>${formatValue(c, max)}</div></div>
-            </td>
-          `
-        }
-        return `<td class="text-right">-</td>`
-      }
-      return `<td></td>`
-    }).join('')
-    tfoot = `<tfoot><tr class="bg-grey-2">${fds}</tr></tfoot>`
-  }
-
   const html = `
     <div
       class="q-mt-sm q-markup-table q-table__container q-table__card q-table--flat q-table--dense q-table--no-wrap table-wrapper"
@@ -119,7 +103,6 @@ export function renderTableWidget(
       <table class="q-table">
         <thead><tr>${thead}</tr></thead>
         <tbody>${tbody}</tbody>
-        ${tfoot}
       </table>
     </div>
   `;

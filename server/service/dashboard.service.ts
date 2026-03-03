@@ -1,5 +1,5 @@
 import { eq, desc, asc, like, gte, lte, ne, gt, lt, and } from 'drizzle-orm'
-import { installations, procurements } from '~~/server/database/schema'
+import { installations, notes, procurements } from '~~/server/database/schema'
 import { ColumnConfig, ComparisonOperator, DataRow, WidgetData } from '~~/types/dashboard'
 import { getDashboardById } from './cms.service'
 
@@ -52,6 +52,7 @@ export async function fetchAndAggregateWidgetData(config: WidgetData['config'], 
         let targetTable: any
         if (source === 'procurements') targetTable = procurements
         else if (source === 'installations') targetTable = installations
+        else if (source === 'notes') targetTable = notes
         else continue
 
         let queryBuilder: any = db.select().from(targetTable)

@@ -66,7 +66,8 @@ const props = withDefaults(defineProps<{
   multipleDataSource: false,
   dataSourceOptions: () => [
     { label: 'Procurements (Pengadaan)', value: 'procurements' },
-    { label: 'Installations (Jasa Instalasi)', value: 'installations' }
+    { label: 'Installations (Jasa Instalasi)', value: 'installations' },
+    { label: 'Notes (Catatan PM)', value: 'notes' },
   ]
 })
 
