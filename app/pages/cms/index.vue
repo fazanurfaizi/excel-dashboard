@@ -9,7 +9,7 @@
           </template>
           
           <q-input v-model="dataModel.code" label="Code" readonly />
-          <q-input v-model="dataModel.name" label="Name" readonly />
+          <q-input v-model="dataModel.name" label="Name" />
         </general-card>
       </div>
 
@@ -38,21 +38,13 @@
       </div>
     </q-form>
 
-    <q-dialog v-model="dialog.show" :persistent="dialog.persistent" transition-show="fade" transition-hide="fade" backdrop-filter="blur(3px)" maximized full-height>
-      <q-card style="min-width: 600px; max-width: 90vw;">
-        <q-toolbar class="bg-primary text-white">
-          <q-toolbar-title>{{ dialog.title }}</q-toolbar-title>
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-toolbar>
-
-        <q-card-section v-if="currentWidget">
-          <FormTable v-if="currentWidget.type == 'table'" v-model="currentWidget"
-            @submit="updateWidget" />
-          <FormChart v-else v-model="currentWidget"
-            @submit="updateWidget" />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <general-dialog v-model="dialog">
+      <template v-if="currentWidget">
+        <form-table v-if="currentWidget.type == 'table'" v-model="currentWidget" @submit="updateWidget" />
+        <form-summary v-else-if="currentWidget.type == 'project_summary'" v-model="currentWidget" @submit="updateWidget" />
+        <form-chart v-else v-model="currentWidget" @submit="updateWidget" />
+      </template>
+    </general-dialog>
   </q-page>
 </template>
 
@@ -61,7 +53,7 @@ import { Meta } from './meta'
 import { useQuasar } from 'quasar'
 import type { Dashboard, WidgetData } from '~~/types/dashboard'
 import { initGrid, addWidget, getWidget, updateWidgetContent, removeWidget, removeAllWidget, getLayout } from '~/utils/gridstack'
-import { COLORS, WIDGET_OPTIONS } from '~/utils/constants'
+import { WIDGET_OPTIONS } from '~/utils/constants'
 
 definePageMeta({
   layout: 'cms'
@@ -291,3 +283,11 @@ onMounted(async () => {
   init()
 })
 </script>
+
+<style>
+.grid-stack-item-content {
+  border: 1px solid var(--q-primary);   
+  border-radius: 8px;   
+  background-color: white; 
+}
+</style>

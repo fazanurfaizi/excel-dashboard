@@ -13,7 +13,6 @@ export const WIDGET_OPTIONS = [
   { label: 'Add Area Chart', value: 'area_chart' },
   { label: 'Add Donut Chart', value: 'donut_chart' },
   { label: 'Add Sparkline Chart', value: 'sparkline_chart' },
-  { label: 'Add Project Summary', value: 'project_summary' },
   { label: 'Add Table', value: 'table' }
 ];
 

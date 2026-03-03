@@ -34,6 +34,9 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
-    spreadsheetId: ''
+    spreadsheetId: '',
+    public: {
+      spreadsheetId: ''
+    }
   }
 })

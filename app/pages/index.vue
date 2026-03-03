@@ -29,8 +29,9 @@
           <template v-else>
             <div class="row items-center justify-between q-mb-sm">
               <div class="row items-center no-wrap">
-                <div v-if="item.title" class="q-px-sm dash-title ellipsis text-subtitle2 text-weight-bold">{{ item.title
-                  }}</div>
+                <div v-if="item.title" class="q-px-sm dash-title ellipsis text-subtitle2 text-weight-bold">
+                  {{ item.title }}
+                </div>
                 <div class="q-pa-xs row q-gutter-sm no-wrap">
                   <q-btn flat round dense color="secondary" size="xs" icon="refresh" @click="fetchWidget(item)">
                     <q-tooltip>Refresh Widget</q-tooltip>
@@ -50,17 +51,31 @@
                   </q-menu>
                 </q-btn>
 
-                <q-select
+                <q-btn
                   v-if="item.type === 'project_summary' && item.config?.summaryTemplate === 'monitoring'"
-                  :model-value="getWidgetFilterValue(item, 'pm') || 'All'"
-                  @update:model-value="(val) => updateWidgetFilter(item, 'pm', val)"
-                  :options="picOptions"
-                  label="PIC"
-                  dense
-                  outlined
-                  options-dense
-                  class="col-4"
-                />
+                  size="sm"
+                  outline
+                  color="primary"
+                  icon="person"
+                  :label="`PIC: ${getWidgetFilterValue(item, 'pm') || 'All'}`"
+                >
+                  <q-menu>
+                    <div class="column q-pa-sm q-gutter-y-xs" style="min-width: 150px">
+                      <div class="text-caption text-grey-8 q-px-xs q-pb-xs">Select PIC</div>
+                      <q-btn
+                        v-for="pic in picOptions"
+                        :key="pic"
+                        :label="pic"
+                        :color="(getWidgetFilterValue(item, 'pm') || 'All') === (pic) ? 'primary' : 'secondary'"
+                        :flat="(getWidgetFilterValue(item, 'pm') || 'All') !== (pic)"
+                        size="sm"
+                        align="left"
+                        v-close-popup
+                        @click="updateWidgetFilter(item, 'pm', pic)"
+                      />
+                    </div>
+                  </q-menu>
+                </q-btn>
               </div>
             </div>
 

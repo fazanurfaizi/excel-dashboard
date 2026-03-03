@@ -11,11 +11,11 @@
     >
       <q-card 
         v-if="dataModel.show" 
-        class="modal-card column" 
+        class="modal-card" 
         :style="!dataModel.maximize ? `max-width: 98vw; width: ${optimizeWidth()}; max-height: 90vh;` : ''"
       >      
-        <!-- <q-bar class="modal-bar">
-          <div class="text-bold text-light">{{ dataModel.title }}</div>
+        <q-bar class="modal-bar full-width bg-grey-3 text-dark">
+          <div class="text-bold">{{ dataModel.title }}</div>
           <q-space />
           
           <q-btn dense flat icon="minimize" @click="toggleMaximize(false)" :disable="!dataModel.maximize">
@@ -30,9 +30,9 @@
           </q-btn>
         </q-bar>
         
-        <q-separator /> -->
+        <q-separator />
 
-        <q-card-section class="modal-body scroll full-width" :key="renderKey">    
+        <q-card-section class="modal-body scroll full-width col" :key="renderKey">    
           <slot></slot>
         </q-card-section>
       </q-card>
