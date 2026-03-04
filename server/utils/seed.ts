@@ -2,7 +2,7 @@ import type { Db, Tx } from '~~/server/utils/db'
 import { procurements, installations, notes } from '~~/server/database/schema'
 import { and, eq, or } from 'drizzle-orm'
 
-export function syncProcurementData(db: Db, data: any[], year: number) {
+export async function syncProcurementData(db: Db, data: any[], year: number) {
   const records = data
     .filter((row: any) => row['No'] && row['Kode Proyek'])
     .map((row: any) => ({
@@ -22,11 +22,11 @@ export function syncProcurementData(db: Db, data: any[], year: number) {
 
   // db.transaction((tx: Tx) => {
   // })
-  db.delete(procurements).where(eq(procurements.year, year)).run()
-  db.insert(procurements).values(records).run()
+  await db.delete(procurements).where(eq(procurements.year, year)).run()
+  await db.insert(procurements).values(records).run()
 }
 
-export function syncInstallationData(db: Db, rawData: any[][], year: number) {
+export async function syncInstallationData(db: Db, rawData: any[][], year: number) {
   // Structure Mapping:
   // Index 0-2 (Rows 1-3): Empty
   // Index 3   (Row 4):    Header 1 (Dates: 01/12/2025...)
@@ -114,12 +114,12 @@ export function syncInstallationData(db: Db, rawData: any[][], year: number) {
 
     if (records.length === 0) return
 
-    db.delete(installations).where(eq(installations.year, year)).run()
-    db.insert(installations).values(records).run()
+    await db.delete(installations).where(eq(installations.year, year)).run()
+    await db.insert(installations).values(records).run()
   }
 }
 
-export function syncNotesData(db: Db, rawData: any[], currentYear: string) {
+export async function syncNotesData(db: Db, rawData: any[], currentYear: string) {
   if (!rawData || rawData.length === 0) {
     console.log('No data found in "Update To Do PM" sheet.');
     return;
@@ -216,18 +216,12 @@ export function syncNotesData(db: Db, rawData: any[], currentYear: string) {
   });
 
   if (deleteConditions.length > 0) {
-    db.delete(notes)
+    await db.delete(notes)
       .where(or(...deleteConditions))
       .run();
     }
 
-  db.insert(notes).values(records).run()
-}
-
-function sanitizeValue(val: any) {
-  if (val === undefined) return null;
-  if (val instanceof Date) return val.toISOString();
-  return val;
+  await db.insert(notes).values(records).run()
 }
 
 function parseTextDate(value: any): string | null {

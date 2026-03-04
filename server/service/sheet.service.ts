@@ -52,17 +52,17 @@ export async function syncSheets(db: Db, spreadsheetId: string) {
 
         if (sheetName === 'Update To Do PM') {
             const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: false, range: 2 })
-            syncNotesData(db, data, currentYear)
+            await syncNotesData(db, data, currentYear)
             processedSheets.push(sheetName)
         } else if (procurementMatch) {
             const year = parseInt(procurementMatch[1] ?? currentYear)
             const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, range: 3 })
-            syncProcurementData(db, data, year)
+            await syncProcurementData(db, data, year)
             processedSheets.push(sheetName)
         } else if (installationMatch) {
             const year = parseInt(installationMatch[1] ?? currentYear)
             const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, header: 1 }) as any[][]
-            syncInstallationData(db, data, year)
+            await syncInstallationData(db, data, year)
             processedSheets.push(sheetName)
         }
     }
