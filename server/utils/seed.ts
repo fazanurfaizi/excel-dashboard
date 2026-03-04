@@ -20,10 +20,13 @@ export async function syncProcurementData(db: Db, data: any[], year: number) {
 
   if (records.length === 0) return
 
-  // db.transaction((tx: Tx) => {
-  // })
   await db.delete(procurements).where(eq(procurements.year, year)).run()
-  await db.insert(procurements).values(records).run()
+
+  const CHUNK_SIZE = 8;
+  for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+    const chunk = records.slice(i, i + CHUNK_SIZE);
+    await db.insert(procurements).values(chunk).run();
+  }  
 }
 
 export async function syncInstallationData(db: Db, rawData: any[][], year: number) {
@@ -115,7 +118,11 @@ export async function syncInstallationData(db: Db, rawData: any[][], year: numbe
     if (records.length === 0) return
 
     await db.delete(installations).where(eq(installations.year, year)).run()
-    await db.insert(installations).values(records).run()
+    const CHUNK_SIZE = 4;
+    for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+      const chunk = records.slice(i, i + CHUNK_SIZE);
+      await db.insert(installations).values(chunk).run();
+    }
   }
 }
 
@@ -221,7 +228,11 @@ export async function syncNotesData(db: Db, rawData: any[], currentYear: string)
       .run();
     }
 
-  await db.insert(notes).values(records).run()
+  const INSERT_CHUNK_SIZE = 15;
+  for (let i = 0; i < records.length; i += INSERT_CHUNK_SIZE) {
+    const chunk = records.slice(i, i + INSERT_CHUNK_SIZE);
+    await db.insert(notes).values(chunk).run();
+  }
 }
 
 function parseTextDate(value: any): string | null {
