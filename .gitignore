@@ -23,5 +23,8 @@ logs
 .env.*
 !.env.example
 
+# Cloudflare env
+.dev.vars
+
 sqlite.db
 *.db

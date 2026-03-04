@@ -3,15 +3,15 @@ import { syncSheets } from '~~/server/service/sheet.service'
 export default defineEventHandler(async (event) => {
     const db = useDrizzle(event)
     const config = useRuntimeConfig()
-    const spreadsheetId = config.spreadsheetId as string
+    const spreadsheetId = config.spreadsheetId || event.context.cloudflare.env.NUXT_SPREADSHEET_ID as string
+
+    // if (!spreadsheetId) {
+    //     console.warn('⚠️ Spreadsheet ID not found in runtime config.')
+    //     return
+    // }
 
     if (!spreadsheetId) {
-        console.warn('⚠️ Spreadsheet ID not found in runtime config.')
-        return
-    }
-
-    if (!spreadsheetId) {
-        throw createError({ statusCode: 400, message: 'Spreadsheet ID is required' })
+        throw createError({ statusCode: 400, message: 'Spreadsheet ID not found in runtime config.' })
     }
 
     try {
