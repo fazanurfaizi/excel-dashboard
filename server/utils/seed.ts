@@ -43,7 +43,13 @@ export async function syncInstallationData(db: Db, rawData: any[][], year: numbe
   const dataRows = rawData.slice(5)
 
   if (headerRow1 && headerRow2) {
-    const staticEndIndex = headerRow1.findIndex(c => c && c.toString().toLowerCase().includes('type atap'))
+    let staticEndIndex = headerRow1.findIndex(c => c && c.toString().toLowerCase().includes('type atap'))
+
+    // Fallback to 'developer' if 'type atap' is not found
+    if (staticEndIndex === -1) {
+      staticEndIndex = headerRow1.findIndex(c => c && c.toString().toLowerCase().includes('developer'))
+    }
+
     const dynamicStartIndex = staticEndIndex + 1
 
     const records: any[] = []
@@ -65,12 +71,12 @@ export async function syncInstallationData(db: Db, rawData: any[][], year: numbe
         pm: row[9],
         admin: row[10],
         sm: row[11],
-        plan_oh: row[12],
-        actual_oh: row[13],
-        manpowerUpdate: row[14],
-        epc: row[15],
-        developer: row[16],
-        roofType: row[17],
+        // plan_oh: row[12],
+        actual_oh: row[12],
+        manpowerUpdate: row[13],
+        epc: row[14],
+        developer: row[15],
+        roofType: row[16],
       }
 
       const progressData: Record<string, any> = {}

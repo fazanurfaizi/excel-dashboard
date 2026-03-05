@@ -297,37 +297,48 @@ const renderChart = () => {
 }
 
 const dynamicDetails = computed(() => {
-  if (!props.project) return []
+  if (!installation.value) return []
 
   const details = []
   
-  details.push({ label: 'Kapasitas', value: `${props.project.capacity || 0} ${props.project.unit || ''}` })
-  details.push({ label: 'Status', value: props.project.status || 'On Progress', isStatus: true })
+  details.push({ label: 'Kapasitas', value: `${installation.value.capacity || 0} ${installation.value.unit || ''}`.trim() })
+
+  details.push({ label: 'Status', value: installation.value.status || 'On Progress', isStatus: true })
   
-  if (props.project.status === 'Retens') {
-    details.push({ label: 'Tanggal Retensi', value: props.project.note || '-', textColor: 'text-negative' })
-  }
+  const bastRetDate = installation.value.bast_and_retention_date || installation.value.bastAndRetentionDate || installation.value.note || '-'
+  details.push({ label: 'BAST & Retention Date', value: bastRetDate })
+    
+  details.push({ label: 'EPC', value: installation.value.epc || '-' })
   
-  details.push({ label: 'Realisasi OH', value: props.project.weeklyMeeting || '-' })
+  details.push({ label: 'Developer', value: installation.value.developer || '-' })
+    
   details.push({ label: 'Progress Pekerjaan', value: `${currentProgress.value.project}%`, textColor: 'text-positive' })
-  details.push({ label: 'Progress Keuangan', value: `${currentProgress.value.finance}%`, textColor: 'text-info' })
-
-  const excludeKeys = [
-    'capacity', 'unit', 'status', 'note', 'weeklyMeeting', 
-    'progressData', 'projectName', 'projectCode', 'location', 'id'
-  ]
   
-  for (const [key, val] of Object.entries(props.project)) {
-    if (!excludeKeys.includes(key) && val !== null && val !== '' && typeof val !== 'object') {    
-      const formattedLabel = key
-        .replace(/_/g, ' ')
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^./, str => str.toUpperCase())
-        .trim()
+  details.push({ label: 'Progress Keuangan', value: `${currentProgress.value.finance}%`, textColor: 'text-info' })
+    
+  const actualOh = installation.value.actual_oh || installation.value.actualOh || installation.value.weeklyMeeting || '-'
+  details.push({ label: 'Actual OH', value: actualOh })
+    
+  details.push({ label: 'PM', value: installation.value.pm || '-' })
+  
+  // const excludeKeys = [
+  //   'capacity', 'unit', 'status', 'note', 'weeklyMeeting', 
+  //   'progressData', 'projectName', 'projectCode', 'location', 'id',
+  //   'bast_and_retention_date', 'bastAndRetentionDate', 'epc', 'developer',
+  //   'actual_oh', 'actualOh', 'pm'
+  // ]
+  
+  // for (const [key, val] of Object.entries(installation.value)) {
+  //   if (!excludeKeys.includes(key) && val !== null && val !== '' && typeof val !== 'object') {    
+  //     const formattedLabel = key
+  //       .replace(/_/g, ' ')
+  //       .replace(/([A-Z])/g, ' $1')
+  //       .replace(/^./, str => str.toUpperCase())
+  //       .trim()
 
-      details.push({ label: formattedLabel, value: val })
-    }
-  }
+  //     details.push({ label: formattedLabel, value: val })
+  //   }
+  // }
 
   return details
 })
