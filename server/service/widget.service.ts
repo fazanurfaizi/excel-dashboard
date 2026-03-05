@@ -18,7 +18,7 @@ export async function processWidgetGeneration(event: H3Event, req: WidgetRequest
     let charts: WidgetRenderResult['charts'] = []
 
     if (req.type === 'table') {
-        const res = renderTableWidget(rows, req.config.columns, req.height)
+        const res = renderTableWidget(rows, req.config.columns, req.config.dataSource, req.height)
         html = res.html
         charts = res.charts
     } else if (req.type === 'project_summary') {

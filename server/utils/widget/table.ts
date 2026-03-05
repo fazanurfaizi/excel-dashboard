@@ -50,6 +50,7 @@ function formatValue(col: ColumnConfig, val: DataValue): string {
 export function renderTableWidget(
   rows: DataRow[],
   columns: ColumnConfig[] | undefined,
+  dataSource: string[] | null | undefined,
   height?: number
 ): WidgetRenderResult {
   if (!columns || columns.length === 0) {
@@ -80,6 +81,8 @@ export function renderTableWidget(
   }).join('')
 
   let tbody = ''
+  const isInstallations = dataSource && dataSource.includes('installations')
+  
   for (const row of cleanRows) {
     const tds = cols.map((col) => {
       if (!col.hideColumn) {
@@ -94,8 +97,12 @@ export function renderTableWidget(
       normalizedRow[cleanKey] = value
     }
 
-    const rowJson = encodeURIComponent(JSON.stringify(normalizedRow))
-    tbody += `<tr class="cursor-pointer hoverable-row" data-row="${rowJson}">${tds}</tr>`
+    if (isInstallations) {
+      const rowJson = encodeURIComponent(JSON.stringify(normalizedRow))
+      tbody += `<tr class="cursor-pointer hoverable-row" data-row="${rowJson}">${tds}</tr>`
+    } else {
+      tbody += `<tr>${tds}</tr>`
+    }
   }
 
   const html = `
