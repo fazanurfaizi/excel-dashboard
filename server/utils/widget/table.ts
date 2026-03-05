@@ -60,9 +60,12 @@ export function renderTableWidget(
   }
 
   const cleanRows = rows.filter(row => {
-    return Object.values(row).some(val => {
-      if (val === undefined || val === null || val === '') return false;
+    return columns.every(col => {
+      const val = row[col.id || col.name];
+
+      if (val === undefined || val === 'undefined' || val === null || val === '') return false;
       if (typeof val === 'object' && Object.keys(val).length === 0) return false;
+      
       return true;
     });
   });

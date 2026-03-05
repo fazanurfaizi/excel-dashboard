@@ -4,7 +4,7 @@ import { and, eq, or } from 'drizzle-orm'
 
 export async function syncProcurementData(db: Db, data: any[], year: number) {
   const records = data
-    .filter((row: any) => row['No'] && row['Kode Proyek'])
+    .filter((row: any) => row['No'] && row['Kode Proyek'] && row['Nama Projet'] && row['PM'])
     .map((row: any) => ({
       year: year,
       status: row['Status'],
