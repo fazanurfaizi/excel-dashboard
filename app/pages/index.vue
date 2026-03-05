@@ -254,6 +254,7 @@ const handleWidgetClick = (event: MouseEvent) => {
     if (rowDataStr) {
       try {
         const rowData = JSON.parse(decodeURIComponent(rowDataStr))
+        console.log(rowData)
 
         if (rowData && (rowData.progressData || rowData.projectCode)) {
           dialog.value.props = rowData

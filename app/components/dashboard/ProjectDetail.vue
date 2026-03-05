@@ -78,13 +78,13 @@
         <div class="col-12 col-md-8">
           <q-card flat bordered class="full-height">
             <q-card-section class="q-pa-sm">
-              <div class="text-h6 text-primary">Kurva S (Progress Pekerjaan vs Keuangan)</div>
+              <div class="text-h6 text-primary">Progress Pekerjaan vs Keuangan</div>
             </q-card-section>
             <q-card-section class="q-pa-sm q-pt-none">
               <div ref="chartRef" style="width: 100%; height: 400px;"></div>
             </q-card-section>
           </q-card>
-        </div>        
+        </div>
 
         <div class="col-12">
           <q-card flat bordered>
@@ -101,7 +101,7 @@
                 <div 
                   v-for="(item, index) in progressList" 
                   :key="index"
-                  class="col-12 col-sm-4 col-md-3 col-lg-2"
+                  :class="dynamicColClass"
                 >
                   <q-card flat bordered class="full-height hoverable-card">
                     <q-card-section class="q-pa-xs bg-grey-2 text-center">
@@ -136,9 +136,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue'])
 
+const $api = useApi()
+
 const chartRef = ref<HTMLElement | null>(null)
 const pmNotes = ref<any[]>([])
 const isLoadingNotes = ref(false)
+const installation = ref<any>(null)
+const isLoadingInstallation = ref(false)
 
 const formatDate = (dateStr: string | number | null) => {
   if (!dateStr) return 'Tanggal tidak diketahui'
@@ -150,6 +154,30 @@ const formatDate = (dateStr: string | number | null) => {
   })
 }
 
+const fetchInstallation = async () => {
+  if (!props.project?.projectCode) {
+    installation.value = null
+    return
+  }
+
+  isLoadingInstallation.value = true
+  try {
+    const url = `/api/installations/${props.project.projectCode}`
+    
+    const data = await $api.get(url)
+    installation.value = data
+
+    nextTick(() => {
+      renderChart()
+    })
+  } catch (error) {
+    console.error('Failed to fetch installations:', error)
+    installation.value = null
+  } finally {
+    isLoadingInstallation.value = false
+  }
+}
+
 const fetchNotes = async () => {
   if (!props.project?.pm || !props.project?.projectName || !props.project?.year) {
     pmNotes.value = []
@@ -158,13 +186,8 @@ const fetchNotes = async () => {
 
   isLoadingNotes.value = true
   try {
-    const data = await $fetch('/api/notes/project', {
-      query: {
-        pm: props.project.pm,
-        projectName: props.project.projectName,
-        year: props.project.year
-      }
-    })
+    const url = `/api/notes/project?pm=${props.project.pm}&projectName=${props.project.projectName.trim()}&year=${props.project.year}`
+    const data = await $api.get(url)
     pmNotes.value = data as any[]
   } catch (error) {
     console.error('Failed to fetch notes:', error)
@@ -182,18 +205,18 @@ const getStatusColor = (status: string) => {
 }
 
 const currentProgress = computed(() => {
-  if (!props.project?.progressData) return { project: 0, finance: 0 }
+  if (!installation.value?.progressData) return { project: 0, finance: 0 }
   
-  const dates = Object.keys(props.project.progressData)
+  const dates = Object.keys(installation.value.progressData)
   let lastProject = 0, lastFinance = 0
 
   for (const date of dates) {
-    const data = props.project.progressData[date]
+    const data = installation.value.progressData[date]
     if (data.project && !isNaN(parseFloat(data.project))) lastProject = parseFloat(data.project)
     if (data.finance && !isNaN(parseFloat(data.finance))) lastFinance = parseFloat(data.finance)
   }
 
-  const formatValue = (val: any) => val < 1 && val > 0 ? (val * 100).toFixed(2) : val
+  const formatValue = (val: any) => val <= 1 && val > 0 ? (val * 100).toFixed(2) : val
 
   return { 
     project: formatValue(lastProject), 
@@ -202,7 +225,7 @@ const currentProgress = computed(() => {
 })
 
 const progressList = computed(() => {
-  if (!props.project?.progressData) return []
+  if (!installation.value?.progressData) return []
   
   const formatCardValue = (val: any) => {
     if (val === null || val === undefined || val === '') return '-'
@@ -211,7 +234,7 @@ const progressList = computed(() => {
     return num > 0 && num <= 1 ? `${(num * 100).toFixed(2)}%` : `${num}%`
   }
 
-  return Object.entries(props.project.progressData).map(([date, data]: [string, any]) => ({
+  return Object.entries(installation.value.progressData).map(([date, data]: [string, any]) => ({
     date,
     project: formatCardValue(data.project),
     finance: formatCardValue(data.finance)
@@ -219,45 +242,51 @@ const progressList = computed(() => {
 })
 
 const renderChart = () => {
-  if (!props.project?.progressData || !chartRef.value) return
+  if (!installation.value?.progressData || !chartRef.value) return
 
-  const rawData = props.project.progressData
-  const dates = Object.keys(rawData)
+  const rawData = installation.value.progressData
+
+  const excludedKeys = ['Progres Terakhir/Minggu terakhir', 'Progress Minggu Kemarin']
+  const dates = Object.keys(rawData).filter(key => !excludedKeys.includes(key))
+
+  if (dates.length === 0) {
+    if (typeof window !== 'undefined' && (window as any).Plotly) {
+      ;(window as any).Plotly.purge(chartRef.value)
+    }
+    return
+  }
   
   const projectData = dates.map(d => {
     const val = parseFloat(rawData[d].project)
-    return isNaN(val) ? null : (val < 1 && val > 0 ? val * 100 : val)
+    return isNaN(val) ? null : (val <= 1 && val > 0 ? val * 100 : val)
   })
   
   const financeData = dates.map(d => {
     const val = parseFloat(rawData[d].finance)
-    return isNaN(val) ? null : (val < 1 && val > 0 ? val * 100 : val)
+    return isNaN(val) ? null : (val <= 1 && val > 0 ? val * 100 : val)
   })
 
   const traceProject = {
     x: dates,
     y: projectData,
     name: 'Progress Project',
-    type: 'scatter',
-    mode: 'lines+markers',
-    line: { shape: 'spline', color: '#21ba45', width: 3 },
-    connectgaps: true
+    type: 'bar',
+    marker: { color: '#21ba45' }
   }
 
   const traceFinance = {
     x: dates,
     y: financeData,
     name: 'Progress Keuangan',
-    type: 'scatter',
-    mode: 'lines+markers',
-    line: { shape: 'spline', color: '#31ccec', width: 3, dash: 'dot' },
-    connectgaps: true
-  }
+    type: 'bar',
+    marker: { color: '#31ccec' }
+  }  
 
   const layout = {
     autosize: true,
+    barmode: 'group',
     margin: { t: 20, r: 20, l: 40, b: 60 },
-    xaxis: { title: 'Tanggal' },
+    xaxis: { title: 'Tanggal', type: 'category' },
     yaxis: { title: 'Persentase (%)', range: [0, 105] },
     legend: { orientation: 'h', y: -0.2 }
   }
@@ -303,10 +332,20 @@ const dynamicDetails = computed(() => {
   return details
 })
 
+const dynamicColClass = computed(() => {
+  const total = progressList.value.length    
+  if (total === 1) return 'col-12 col-sm-6 col-md-4 col-lg-3'    
+  if (total === 2) return 'col-12 col-sm-6'    
+  if (total === 3) return 'col-12 col-sm-4'    
+  if (total === 4) return 'col-12 col-sm-6 col-md-3'    
+  return 'col-12 col-sm-4 col-md-3 col-lg-2'
+})
+
 onMounted(() => {
   nextTick(() => {
     renderChart()
   })
+  fetchInstallation()
   fetchNotes()
 })
 
@@ -314,7 +353,14 @@ watch(() => props.project, () => {
   nextTick(() => {
     renderChart()
   })
+  fetchInstallation()
   fetchNotes()
+}, { deep: true })
+
+watch(() => installation.value, () => {
+  nextTick(() => {
+    renderChart()
+  })
 }, { deep: true })
 </script>
 
