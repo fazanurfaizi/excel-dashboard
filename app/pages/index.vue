@@ -170,6 +170,30 @@ const setWidgetRef = (el: HTMLElement | null, id: string) => {
 const handleWidgetClick = (event: MouseEvent) => {
   const target = event.target as HTMLElement
 
+  const tabBtn = target.closest('[data-tab-btn]')
+  if (tabBtn) {
+    const targetId = tabBtn.getAttribute('data-tab-target')
+    const hideId = tabBtn.getAttribute('data-tab-hide')
+
+    if (targetId && hideId) {
+      const targetEl = document.getElementById(targetId)
+      const hideEl = document.getElementById(hideId)
+      if (targetEl) targetEl.style.display = 'block'
+      if (hideEl) hideEl.style.display = 'none'
+
+      const parent = tabBtn.parentElement
+      if (parent) {
+        Array.from(parent.children).forEach(child => {
+          child.classList.remove('bg-primary', 'text-white')
+          child.classList.add('bg-white', 'text-grey-8')
+        })
+        tabBtn.classList.remove('bg-white', 'text-grey-8')
+        tabBtn.classList.add('bg-primary', 'text-white')
+      }
+    }
+    return
+  }
+
   const statusCard = target.closest('.hoverable-card[data-status-summary]')
   if (statusCard) {
     const summaryStr = statusCard.getAttribute('data-status-summary')

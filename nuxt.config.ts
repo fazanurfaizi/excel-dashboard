@@ -2,7 +2,13 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-30',
   devtools: { enabled: true },
-  modules: ['nuxt-quasar-ui', '@vueuse/nuxt', '@pinia/nuxt', 'nuxt-auth-utils'],
+  modules: [
+    'nuxt-quasar-ui', 
+    '@vueuse/nuxt', 
+    '@pinia/nuxt', 
+    'nuxt-auth-utils',
+    'nitro-cloudflare-dev'
+  ],
   quasar: {
     plugins: [
       'Notify',

@@ -30,6 +30,8 @@
   "devDependencies": {
     "@types/plotly.js-dist-min": "^2.3.4",
     "drizzle-kit": "^0.31.9",
-    "sass-embedded": "^1.97.3"
+    "nitro-cloudflare-dev": "^0.2.2",
+    "sass-embedded": "^1.97.3",
+    "wrangler": "^4.70.0"
   }
 }

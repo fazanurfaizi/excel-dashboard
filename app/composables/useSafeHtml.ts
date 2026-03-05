@@ -5,7 +5,7 @@ export function useSafeHtml() {
     const fragment = DOMPurify.sanitize(html, {
       RETURN_DOM_FRAGMENT: true,
       USE_PROFILES: { html: true },
-      ADD_TAGS: ['style'],
+      ADD_TAGS: ['style', 'script'],
       ADD_ATTR: ['style', 'class'],
       WHOLE_DOCUMENT: true,
     })
