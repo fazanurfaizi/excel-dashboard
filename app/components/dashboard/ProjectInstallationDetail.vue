@@ -42,7 +42,7 @@
                     </q-item-label>
                     
                   </q-item-section>
-                </q-item>
+                </q-item>                
               </q-list>
             </q-card-section>
           </q-card>
@@ -128,23 +128,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
 
-const props = defineProps<{
-  project: any
-}>()
-
-const emit = defineEmits(['update:modelValue'])
-
+const props = defineProps<{ project: any }>()
 const $api = useApi()
 
 let resizeObserver: ResizeObserver | null = null
-
 const chartRef = ref<HTMLElement | null>(null)
 const pmNotes = ref<any[]>([])
 const isLoadingNotes = ref(false)
-const installation = ref<any>(null)
-const isLoadingInstallation = ref(false)
+const detail = ref<any>(null)
+const isLoadingDetail = ref(false)
 
 const formatDate = (dateStr: string | number | null) => {
   if (!dateStr) return 'Tanggal tidak diketahui'
@@ -156,27 +150,22 @@ const formatDate = (dateStr: string | number | null) => {
   })
 }
 
-const fetchInstallation = async () => {
+const fetchDetail = async () => {
   if (!props.project?.projectCode) {
-    installation.value = null
+    detail.value = null
     return
   }
 
-  isLoadingInstallation.value = true
+  isLoadingDetail.value = true
   try {
     const url = `/api/installations/${props.project.projectCode}`
-    
-    const data = await $api.get(url)
-    installation.value = data
-
-    nextTick(() => {
-      renderChart()      
-    })
+    detail.value = await $api.get(url)
+    nextTick(() => renderChart())
   } catch (error) {
-    console.error('Failed to fetch installations:', error)
-    installation.value = null
+    console.error(`Failed to fetch installations:`, error)
+    detail.value = null
   } finally {
-    isLoadingInstallation.value = false
+    isLoadingDetail.value = false
   }
 }
 
@@ -189,8 +178,7 @@ const fetchNotes = async () => {
   isLoadingNotes.value = true
   try {
     const url = `/api/notes/project?pm=${props.project.pm}&projectName=${props.project.projectName.trim()}&year=${props.project.year}`
-    const data = await $api.get(url)
-    pmNotes.value = data as any[]
+    pmNotes.value = await $api.get(url) as any[]
   } catch (error) {
     console.error('Failed to fetch notes:', error)
     pmNotes.value = []
@@ -207,13 +195,13 @@ const getStatusColor = (status: string) => {
 }
 
 const currentProgress = computed(() => {
-  if (!installation.value?.progressData) return { project: 0, finance: 0 }
+  if (!detail.value?.progressData) return { project: 0, finance: 0 }
   
-  const dates = Object.keys(installation.value.progressData)
+  const dates = Object.keys(detail.value.progressData)
   let lastProject = 0, lastFinance = 0
 
   for (const date of dates) {
-    const data = installation.value.progressData[date]
+    const data = detail.value.progressData[date]
     if (data.project && !isNaN(parseFloat(data.project))) lastProject = parseFloat(data.project)
     if (data.finance && !isNaN(parseFloat(data.finance))) lastFinance = parseFloat(data.finance)
   }
@@ -227,7 +215,7 @@ const currentProgress = computed(() => {
 })
 
 const progressList = computed(() => {
-  if (!installation.value?.progressData) return []
+  if (!detail.value?.progressData) return []
   
   const formatCardValue = (val: any) => {
     if (val === null || val === undefined || val === '') return '-'
@@ -236,7 +224,7 @@ const progressList = computed(() => {
     return num > 0 && num <= 1 ? `${(num * 100).toFixed(2)}%` : `${num}%`
   }
 
-  return Object.entries(installation.value.progressData).map(([date, data]: [string, any]) => ({
+  return Object.entries(detail.value.progressData).map(([date, data]: [string, any]) => ({
     date,
     project: formatCardValue(data.project),
     finance: formatCardValue(data.finance)
@@ -244,10 +232,9 @@ const progressList = computed(() => {
 })
 
 const renderChart = () => {
-  if (!installation.value?.progressData || !chartRef.value) return
+  if (!detail.value?.progressData || !chartRef.value) return
 
-  const rawData = installation.value.progressData
-
+  const rawData = detail.value.progressData
   const excludedKeys = ['Progres Terakhir/Minggu terakhir', 'Progress Minggu Kemarin']
   const dates = Object.keys(rawData).filter(key => !excludedKeys.includes(key))
 
@@ -308,48 +295,22 @@ const renderChart = () => {
 }
 
 const dynamicDetails = computed(() => {
-  if (!installation.value) return []
+  if (!detail.value) return []
 
   const details = []
+  details.push({ label: 'Kapasitas', value: `${detail.value.capacity || 0} ${detail.value.unit || ''}`.trim() })
+  details.push({ label: 'Status', value: detail.value.status || 'On Progress', isStatus: true })
   
-  details.push({ label: 'Kapasitas', value: `${installation.value.capacity || 0} ${installation.value.unit || ''}`.trim() })
-
-  details.push({ label: 'Status', value: installation.value.status || 'On Progress', isStatus: true })
-  
-  const bastRetDate = installation.value.bast_and_retention_date || installation.value.bastAndRetentionDate || installation.value.note || '-'
+  const bastRetDate = detail.value.bast_and_retention_date || detail.value.bastAndRetentionDate || detail.value.note || '-'
   details.push({ label: 'BAST & Retention Date', value: bastRetDate })
-    
-  details.push({ label: 'EPC', value: installation.value.epc || '-' })
-  
-  details.push({ label: 'Developer', value: installation.value.developer || '-' })
-    
+  details.push({ label: 'EPC', value: detail.value.epc || '-' })
+  details.push({ label: 'Developer', value: detail.value.developer || '-' })
   details.push({ label: 'Progress Pekerjaan', value: `${currentProgress.value.project}%`, textColor: 'text-positive' })
-  
   details.push({ label: 'Progress Keuangan', value: `${currentProgress.value.finance}%`, textColor: 'text-info' })
     
-  const actualOh = installation.value.actual_oh || installation.value.actualOh || installation.value.weeklyMeeting || '-'
+  const actualOh = detail.value.actual_oh || detail.value.actualOh || detail.value.weeklyMeeting || '-'
   details.push({ label: 'Actual OH', value: actualOh })
-    
-  details.push({ label: 'PM', value: installation.value.pm || '-' })
-  
-  // const excludeKeys = [
-  //   'capacity', 'unit', 'status', 'note', 'weeklyMeeting', 
-  //   'progressData', 'projectName', 'projectCode', 'location', 'id',
-  //   'bast_and_retention_date', 'bastAndRetentionDate', 'epc', 'developer',
-  //   'actual_oh', 'actualOh', 'pm'
-  // ]
-  
-  // for (const [key, val] of Object.entries(installation.value)) {
-  //   if (!excludeKeys.includes(key) && val !== null && val !== '' && typeof val !== 'object') {    
-  //     const formattedLabel = key
-  //       .replace(/_/g, ' ')
-  //       .replace(/([A-Z])/g, ' $1')
-  //       .replace(/^./, str => str.toUpperCase())
-  //       .trim()
-
-  //     details.push({ label: formattedLabel, value: val })
-  //   }
-  // }
+  details.push({ label: 'PM', value: detail.value.pm || '-' })
 
   return details
 })
@@ -364,32 +325,20 @@ const dynamicColClass = computed(() => {
 })
 
 onMounted(() => {  
-  fetchInstallation()
+  fetchDetail()
   fetchNotes()
-  nextTick(() => {
-    renderChart()
-  })
 })
 
 onBeforeUnmount(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
+  if (resizeObserver) resizeObserver.disconnect()
 })
 
 watch(() => props.project, () => {  
-  fetchInstallation()
+  fetchDetail()
   fetchNotes()
-  nextTick(() => {
-    renderChart()
-  })
 }, { deep: true })
 
-watch(() => installation.value, () => {
-  nextTick(() => {
-    renderChart()
-  })
-}, { deep: true })
+watch(() => detail.value, () => nextTick(() => renderChart()), { deep: true })
 </script>
 
 <style scoped>

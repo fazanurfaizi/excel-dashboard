@@ -160,7 +160,14 @@
     </div>
 
     <general-dialog v-model="dialog">
-      <dashboard-project-detail v-if="dialog.type == 'project'" :project="dialog.props" />
+      <dashboard-project-installation-detail 
+        v-if="dialog.type == 'project' && dialog.props.dataType === 'installations'" 
+        :project="dialog.props" 
+      />
+      <dashboard-project-procurement-detail 
+        v-if="dialog.type == 'project' && dialog.props.dataType === 'procurements'" 
+        :project="dialog.props" 
+      />
       <dashboard-summary-detail v-else-if="dialog.type == 'summary'" :project="dialog.props" />
     </general-dialog>
   </q-page>
@@ -184,7 +191,7 @@ const { render } = useSafeHtml()
 
 const $api = useApi()
 const $q = useQuasar()
-const themeStore = useThemeStore()
+// const themeStore = useThemeStore()
 
 const dialog = ref<any>({
   show: false,
@@ -292,11 +299,13 @@ const handleWidgetClick = (event: MouseEvent) => {
   const tr = target.closest('tr[data-row]')
   if (tr) {
     const rowDataStr = tr.getAttribute('data-row')
+    const dataType = tr.getAttribute('data-type') || 'installations'
     if (rowDataStr) {
       try {
         const rowData = JSON.parse(decodeURIComponent(rowDataStr))
 
-        if (rowData && (rowData.progressData || rowData.projectCode)) {
+        if (rowData) {
+          rowData.dataType = dataType
           dialog.value.props = rowData
           dialog.value.type = 'project'
           dialog.value.title = `${rowData?.projectName} (${rowData?.projectCode})`

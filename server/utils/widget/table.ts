@@ -62,15 +62,11 @@ export function renderTableWidget(
 
   const cleanRows = rows.filter(row => {
     return columns.every(col => {
-      const val = row[col.id || col.name];
-      console.log(val)
-
-      if (val === undefined || val === 'undefined' || val === null || val === '') return false;
-      // if (typeof val === 'object' && Object.keys(val).length === 0) return false;
-      
-      return true;
-    });
-  });
+      const val = row[col.id || col.name]
+      if (val === undefined || val === 'undefined' || val === null || val === '') return false
+      return true
+    })
+  })
 
   if (cleanRows.length === 0) {
     return { html: "<div class='text-grey q-pa-md'>No data</div>", charts: [] }
@@ -81,8 +77,14 @@ export function renderTableWidget(
     if (!col.hideColumn) return `<th class="text-center">${escapeHtml(col.label || col.id || col.name || '')}</th>`
   }).join('')
 
+  let dataType = ''
+  if (dataSource?.includes('installations')) {
+    dataType = 'installations'
+  } else if (dataSource?.includes('procurements')) {
+    dataType = 'procurements'
+  }
+
   let tbody = ''
-  const isInstallations = dataSource && dataSource.includes('installations')
   
   for (const row of cleanRows) {
     const tds = cols.map((col) => {
@@ -98,12 +100,9 @@ export function renderTableWidget(
       normalizedRow[cleanKey] = value
     }
 
-    if (isInstallations) {
-      const rowJson = encodeURIComponent(JSON.stringify(normalizedRow))
-      tbody += `<tr class="cursor-pointer hoverable-row" data-row="${rowJson}">${tds}</tr>`
-    } else {
-      tbody += `<tr>${tds}</tr>`
-    }
+    const rowJson = encodeURIComponent(JSON.stringify(normalizedRow))
+    
+    tbody += `<tr class="cursor-pointer hoverable-row" data-row="${rowJson}" data-type="${dataType}">${tds}</tr>`
   }
 
   const html = `

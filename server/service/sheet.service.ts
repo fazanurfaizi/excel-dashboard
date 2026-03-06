@@ -56,7 +56,7 @@ export async function syncSheets(db: Db, spreadsheetId: string) {
             processedSheets.push(sheetName)
         } else if (procurementMatch) {
             const year = parseInt(procurementMatch[1] ?? currentYear)
-            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, range: 3 })
+            const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]!, { raw: true, header: 1 }) as any[][]
             await syncProcurementData(db, data, year)
             processedSheets.push(sheetName)
         } else if (installationMatch) {

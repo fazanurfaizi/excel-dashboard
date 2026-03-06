@@ -23,6 +23,7 @@ export const procurements = sqliteTable('procurements', {
     admin: text('admin'),
     epc: text('epc'),
     notes: text('notes'),
+    financeData: text('finance_data', { mode: 'json' }).$type<Record<string, { progress?: string, expense?: string }>>(),
     syncedAt: integer('synced_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 })
 
