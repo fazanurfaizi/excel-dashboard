@@ -138,6 +138,8 @@ const emit = defineEmits(['update:modelValue'])
 
 const $api = useApi()
 
+let resizeObserver: ResizeObserver | null = null
+
 const chartRef = ref<HTMLElement | null>(null)
 const pmNotes = ref<any[]>([])
 const isLoadingNotes = ref(false)
@@ -168,7 +170,7 @@ const fetchInstallation = async () => {
     installation.value = data
 
     nextTick(() => {
-      renderChart()
+      renderChart()      
     })
   } catch (error) {
     console.error('Failed to fetch installations:', error)
@@ -293,6 +295,15 @@ const renderChart = () => {
 
   if (typeof window !== 'undefined' && (window as any).Plotly) {
     ;(window as any).Plotly.newPlot(chartRef.value, [traceProject, traceFinance], layout, { responsive: true })
+    
+    if (resizeObserver) resizeObserver.disconnect()
+    
+    resizeObserver = new ResizeObserver(() => {
+      if (chartRef.value && (window as any).Plotly) {
+        (window as any).Plotly.Plots.resize(chartRef.value)
+      }
+    })
+    resizeObserver.observe(chartRef.value)
   }
 }
 
@@ -345,27 +356,33 @@ const dynamicDetails = computed(() => {
 
 const dynamicColClass = computed(() => {
   const total = progressList.value.length    
-  if (total === 1) return 'col-12 col-sm-6 col-md-4 col-lg-3'    
+  if (total === 1) return 'col-12 col-sm-12'    
   if (total === 2) return 'col-12 col-sm-6'    
   if (total === 3) return 'col-12 col-sm-4'    
   if (total === 4) return 'col-12 col-sm-6 col-md-3'    
   return 'col-12 col-sm-4 col-md-3 col-lg-2'
 })
 
-onMounted(() => {
+onMounted(() => {  
+  fetchInstallation()
+  fetchNotes()
   nextTick(() => {
     renderChart()
   })
-  fetchInstallation()
-  fetchNotes()
 })
 
-watch(() => props.project, () => {
+onBeforeUnmount(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
+
+watch(() => props.project, () => {  
+  fetchInstallation()
+  fetchNotes()
   nextTick(() => {
     renderChart()
   })
-  fetchInstallation()
-  fetchNotes()
 }, { deep: true })
 
 watch(() => installation.value, () => {
