@@ -2,8 +2,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { WidgetRenderResult, DataRow, PlotlyTrace, WidgetData } from "~~/types/dashboard";
 
 export function renderChartWidget(
-    rows: DataRow[], 
-    config: WidgetData['config'], 
+    rows: DataRow[],
+    config: WidgetData['config'],
     height?: number
 ): WidgetRenderResult {
     if (!config || !config.columns || config.columns.length === 0) {
@@ -37,7 +37,7 @@ export function renderChartWidget(
     });
 
     const groups: Record<string, DataRow[]> = {}
-    
+
     cleanRows.forEach(r => {
         const key = chartCfg.legend ? String(r[chartCfg.legend]) : "Series"
         if (!groups[key]) groups[key] = []
@@ -46,11 +46,11 @@ export function renderChartWidget(
 
     const traces: PlotlyTrace[] = []
     const multiSeries = chartCfg.series.length > 1
-   
+
     if (chartCfg.type === "pie") {
         const s = chartCfg.series[0]
         const xField = chartCfg.legend || chartCfg.x;
-        
+
         if (xField && s) {
             traces.push({
                 type: "pie",
@@ -64,6 +64,7 @@ export function renderChartWidget(
         const xKey = chartCfg.x;
 
         for (const [groupName, items] of Object.entries(groups)) {
+            // Sort items internally
             items.sort((a, b) => String(a[xKey]) > String(b[xKey]) ? 1 : -1)
 
             chartCfg.series.forEach(s => {
@@ -105,6 +106,13 @@ export function renderChartWidget(
         }
     }
 
+    // Sort all traces alphabetically by their 'name' property
+    traces.sort((a, b) => {
+        const nameA = String(a.name || '').toLowerCase();
+        const nameB = String(b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+
     const layout: Record<string, unknown> = {
         height: height || 400,
         margin: { l: 50, r: 50, t: 30, b: 60 },
@@ -113,7 +121,11 @@ export function renderChartWidget(
     }
 
     if (chartCfg.type !== "pie") {
-        layout.xaxis = { type: "category", ...(layout.xaxis as object || {}) }
+        layout.xaxis = {
+            type: "category",
+            categoryorder: "category ascending",
+            ...(layout.xaxis as object || {})
+        }
     }
 
     if (chartCfg.series.some(s => s.axis === 'y2')) {
@@ -128,7 +140,7 @@ export function renderChartWidget(
 
     const html = `<div class="row q-col-gutter-md">
         <div class="col-12">
-            <div id="${chartId}" class="plotly-graph-div" min-height: ${height}px !important; max-height: ${height}px !important;></div>
+            <div id="${chartId}" class="plotly-graph-div" style="min-height: ${height}px !important; max-height: ${height}px !important;"></div>
         </div>
     </div>`
 
