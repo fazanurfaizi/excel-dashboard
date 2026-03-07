@@ -308,9 +308,10 @@ const dynamicDetails = computed(() => {
   details.push({ label: 'Progress Pekerjaan', value: `${currentProgress.value.project}%`, textColor: 'text-positive' })
   details.push({ label: 'Progress Keuangan', value: `${currentProgress.value.finance}%`, textColor: 'text-info' })
     
-  const actualOh = detail.value.actual_oh || detail.value.actualOh || detail.value.weeklyMeeting || '-'
+  const actualOh = detail.value.actual_oh || detail.value.actualOh || '-'
   details.push({ label: 'Actual OH', value: actualOh })
   details.push({ label: 'PM', value: detail.value.pm || '-' })
+  details.push({ label: 'Type Atap', value: detail.value.roofType || '-' })
 
   return details
 })

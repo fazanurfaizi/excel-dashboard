@@ -47,7 +47,7 @@
                   <q-item-section>
                     <q-item-label caption>Progress Keuangan</q-item-label>                   
                     <q-item-label class="text-weight-bold text-dark">
-                      {{ detail?.financeData?.progress }}%
+                      {{ detail?.financeData?.progress * 100 }}%
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -55,7 +55,7 @@
                   <q-item-section>
                     <q-item-label caption>Pengeluaran</q-item-label>                   
                     <q-item-label class="text-weight-bold text-dark">
-                      {{ detail?.financeData?.expense }}%
+                      {{ detail?.financeData?.expense * 100 }}%
                     </q-item-label>
                   </q-item-section>
                 </q-item>
