@@ -61,32 +61,35 @@
                 Belum ada catatan untuk project ini.
               </div>
               
-              <q-timeline v-else color="secondary" dense class="q-mt-none">
-                <q-timeline-entry
-                  v-for="note in pmNotes"
-                  :key="note.id"
-                  :title="formatDate(note.noteDate)"
-                  class="q-mb-sm"
-                >
-                  <div class="text-body2 whitespace-pre-line">{{ note.notes }}</div>
-                </q-timeline-entry>
-              </q-timeline>
+              <q-list v-else dense class="q-mt-none">
+                <template v-for="(note, i) in pmNotes" :key="note.id">
+                  <q-item class="q-py-sm">
+                    <q-item-section>
+                      <div class="text-caption text-grey-7">
+                        {{ formatDate(note.noteDate) }}
+                      </div>
+                      <div class="text-body2 whitespace-pre-line">
+                        {{ note.notes }}
+                      </div>
+                    </q-item-section>
+                  </q-item>
+
+                  <q-separator v-if="i < pmNotes.length - 1" />
+                </template>
+              </q-list>
             </q-card-section>
           </q-card>
         </div>
 
-        <div class="col-12 col-md-8">
-          <q-card flat bordered class="full-height">
+        <div class="col-12 col-md-8 q-gutter-y-sm">
+          <q-card flat bordered>
             <q-card-section class="q-pa-sm">
               <div class="text-h6 text-primary">Progress Pekerjaan vs Keuangan</div>
             </q-card-section>
             <q-card-section class="q-pa-sm q-pt-none">
-              <div ref="chartRef" style="width: 100%; height: 400px;"></div>
+              <div ref="chartRef" style="width: 100%; height: 397px;"></div>
             </q-card-section>
           </q-card>
-        </div>
-
-        <div class="col-12">
           <q-card flat bordered>
             <q-card-section class="q-pa-sm">
               <div class="text-h6 text-primary">Detail Progress Mingguan</div>
