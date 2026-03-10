@@ -161,7 +161,8 @@ const fetchDetail = async () => {
 
   isLoadingDetail.value = true
   try {
-    const url = `/api/installations/${props.project.projectCode}`
+    const encodedName = encodeURIComponent(props.project.projectName)
+    const url = `/api/installations/${encodedName}`
     detail.value = await $api.get(url)
     nextTick(() => renderChart())
   } catch (error) {

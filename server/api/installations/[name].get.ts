@@ -3,9 +3,18 @@ import { installations } from '~~/server/database/schema'
 import { useDrizzle } from '~~/server/utils/db'
 
 export default eventHandler(async (event) => {
-    const code = getRouterParam(event, 'code')
+    const rawName = getRouterParam(event, 'name')
+    
+    if (!rawName) {
+        throw createError({
+            statusCode: 400,
+            message: 'Bad Request'
+        })
+    }
+
+    const name = decodeURIComponent(rawName)
         
-    if (!code) {
+    if (!name) {
         throw createError({
             statusCode: 400,
             message: 'Bad Request'
@@ -18,7 +27,7 @@ export default eventHandler(async (event) => {
         .from(installations)
         .where(
             and(
-                eq(installations.projectCode, String(code)),
+                eq(installations.projectName, name),
             )
         )
         .limit(1)
